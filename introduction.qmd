@@ -1,0 +1,748 @@
+---
+title: "Review of Simulated Data"
+author: "Jake Rozran"
+format: 
+  html:
+    toc: true
+framework: bootstrap
+mode: selfcontained
+highlighter: prettify
+hitheme: twitter-bootstrap
+assets:
+  css:
+  - http://fonts.googleapis.com/css?family=Raleway:300
+  - http://fonts.googleapis.com/css?family=Oxygen
+---
+
+<style>
+body{
+  font-family: 'Oxygen', sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+h1,h2,h3,h4 {
+  font-family: 'Raleway', sans-serif;
+}
+
+.container { width: 1000px; }
+h3 {
+  background-color: #D4DAEC;
+  text-indent: 100px; 
+}
+h4 {
+  text-indent: 100px;
+}
+
+g-table-intro h4 {
+  text-indent: 0px;
+}
+</style>
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+
+library(httr)
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(evd)
+
+options(scipen = 999)
+
+# Get Stock Data
+get_dat <- function(symbol, freq_num = 1, freq = "d", period1 = 1410825600, 
+                    period2 = as.numeric(format(as_datetime(Sys.time()), "%s"))) {
+    symbol <- gsub("\\.", "\\-", symbol)
+    URL <- paste0("https://query1.finance.yahoo.com/v7/finance/download/", 
+                  symbol, "?period1=", period1, "&period2=", period2, 
+                  "&interval=", freq_num, freq, 
+                  "&events=history&includeAdjustedClose=true")
+    
+    dat <- GET(URL)
+    dat <- content(dat, show_col_types = FALSE, encoding = "UTF-8")
+    
+    if(length(class(dat)) < 4) {
+        print(paste0("shit is breaking on ", symbol))
+        return(NULL)
+    }
+    
+    dat$symbol <- symbol
+    
+    return(dat)
+}
+```
+
+## Introduction
+
+Last year, I spent a considerable amount of time attempting to simulate stock 
+price movements using a monte carlo simulation. The goal was to use the 
+simulation in order to pick the stocks most likely to move upwards. It seems 
+like this simulation could be used to fuel any model: picking winners, losers, 
+or any number of very specific targets. 
+
+This document is intended to remind myself (and others) of what I did and how I 
+did it. Feedback is welcome. 
+
+## How it Worked
+
+1. Get historical data on stock or crypto & calculate daily movement (percent 
+change)
+2. Model the distribution of daily changes with a 
+[psuedo extreme value distribution (EVD)](https://en.wikipedia.org/wiki/Generalized_extreme_value_distribution)
+3. Create a Monte Carlo simulation of the stock using values chosen from the EVD
+4. Create a model using features based on the Monte Carlo simulation
+
+## Walking Through the Steps
+
+For this example, I will use `ETH-USD`.
+
+### Step 1: Get Historical Data & Calculate Daily Movement
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+dat <- get_dat("ETH-USD")
+
+dat <- dat %>% 
+    mutate(last_close = lag(Close, 1),
+           percent_change = (Close - last_close) / last_close) %>% 
+    select(symbol, 
+           Date,
+           Close,
+           last_close,
+           percent_change)
+
+ggplot(dat, aes(x = Date, y = Close)) + 
+    geom_line() + 
+    scale_y_continuous(labels = dollar_format()) +
+    ggtitle("Price of ETH since November 2017") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+```
+
+Notice that while the price seems to be much more volatile since 2021, this is 
+actually an illusion due to the higher price. The percent change (below), seems 
+to be relatively constant thoughout the time period.
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+ggplot(dat, aes(x = Date, y = percent_change)) + 
+    geom_line(linewidth = 0.25) + 
+    scale_y_continuous(labels = percent_format()) +
+    ggtitle("Percent Change in Price of ETH since November 2017") + 
+    ylab("Percent Change in Price (Close to Close)") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+```
+
+### Step 2: Modeling the Distribution
+
+The created distribution, as desired, is very similar to the actuals, but with 
+slightly thicker tails. This allows for more volatility to be seen in the model, 
+especially on the downside. I intentionally wanted to be bearish (my bets were 
+all bullish) as a hedge. 
+
+Actual data are on the left, modeled data are on the right.
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+upper_scale <- 0.60
+lower_scale <- 0.65
+upper_shape <- 0.09
+lower_shape <- 0.1
+sample_size <- 20000
+
+perc_pos <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change >= 0, 
+                       TRUE, FALSE)) / length(dat$percent_change)
+perc_neg <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change < 0, 
+                       TRUE, FALSE)) / length(dat$percent_change)
+avg <- mean(dat$percent_change, na.rm = TRUE)
+std <- sd(dat$percent_change, na.rm = TRUE)
+
+evd_dist <- tibble(
+    percent_change = c(
+        rgev(sample_size * perc_pos, 
+             loc = avg, 
+             scale = upper_scale * std, 
+             shape = upper_shape),
+        -1 * rgev(sample_size * perc_neg, 
+                  loc = avg, 
+                  scale = lower_scale * std, 
+                  shape = lower_shape)))
+
+act <- ggplot(dat, aes(x = percent_change)) + 
+    geom_histogram(fill = "navy", color = "white") + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.05, 
+                                      max(evd_dist$percent_change) + 0.05), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Histogram of Percent Change in\nPrice of ETH since November 2017") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+mod <- ggplot(evd_dist, aes(x = percent_change)) + 
+    geom_histogram(fill = "navy", color = "white") + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.05, 
+                                      max(evd_dist$percent_change) + 0.05), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Histogram of Modeled Percent\nChange in Price of ETH") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+gridExtra::grid.arrange(act, mod, nrow = 1)
+```
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+act <- ggplot(dat, aes(x = percent_change)) + 
+    geom_boxplot() + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.05, 
+                                      max(evd_dist$percent_change) + 0.05), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Boxplot of Percent Change in\nPrice of ETH since November 2017") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    coord_flip() + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text.x = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+mod <- ggplot(evd_dist, aes(x = percent_change)) + 
+    geom_boxplot() + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.05, 
+                                      max(evd_dist$percent_change) + 0.05), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Boxplot of Modeled Percent\nChange in Price of ETH") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    coord_flip() + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text.x = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+gridExtra::grid.arrange(act, mod, nrow = 1)
+```
+
+### Step 3: The Monte Carlo Simulation
+
+A Monte Carlo simulation allows us to create alternative futures randomly. The 
+idea is that if you simulate enough times, you'll get an idea of what is 
+possible and what can be expected (read: more likely to occur). 
+
+This first plot shows a single random future generated. If the actual price 
+(black) wasn't plotted, too, one could be fooled into thinking this "future" 
+actually happened. 
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+start_date <- dat %>% 
+    filter(Date == Sys.Date() - days(31)) %>% 
+    pull(Date)
+start_price <- dat %>% 
+    filter(Date == Sys.Date() - days(31)) %>% 
+    pull(Close)
+
+mc_dat <- tibble(
+    Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
+    perc_change = c(NA, sample(evd_dist$percent_change, 
+                         size = 30, 
+                         replace = TRUE) + 1),
+    closing_price = c(start_price, rep(NA, 30))
+)
+
+for (da in 2:31) {
+    mc_dat$closing_price[da] <- mc_dat$closing_price[da - 1] * 
+        mc_dat$perc_change[da]
+    
+    mc_dat$closing_price[da] <- ifelse(mc_dat$closing_price[da] < 0, 0,
+                                       mc_dat$closing_price[da])
+}
+
+plot_dat <- dat %>% 
+    left_join(mc_dat, by = "Date") %>% 
+    filter(Date >= as_date("2022-09-01")) 
+
+ggplot(plot_dat, aes(x = Date)) +
+    geom_line(aes(y = Close)) + 
+    geom_line(aes(y = closing_price), color = "navy", alpha = 0.5) +
+    ggtitle("Creating a Singular Alternative Future for the 'next' 30 days",
+            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+    scale_y_continuous(labels = dollar_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+```
+
+When we plot 10,000 alternative futures on the same graph with the actual 
+prices, a unique thing happens. Our actual price comes very close to the median 
+predicted "future." This may be the most "likely" outcome, but it shouldn't be 
+the "expected" outcome (see CMCSA below for a counter example).
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+num_sims <- 10000
+
+mc_dat <- tibble(
+    Date = rep(seq.Date(start_date, Sys.Date() - days(1), by = "day"), num_sims),
+    perc_change = sample(evd_dist$percent_change, 
+                         size = 31 * num_sims, 
+                         replace = TRUE) + 1,
+    closing_price = rep(c(start_price, rep(NA, 30)), num_sims),
+    sample = rep(1:num_sims, each = 31)
+)
+
+for (da in seq.Date(start_date, Sys.Date() - days(1), by = "day")) {
+    da <- as_date(da)
+    if (da == as_date("2022-10-14")) {
+        next
+    }
+    
+    mc_dat$closing_price[mc_dat$Date == da] <- mc_dat$closing_price[mc_dat$Date == da - days(1)] * 
+        mc_dat$perc_change[mc_dat$Date == da]
+}
+
+plot_dat <- dat %>% 
+    left_join(mc_dat, by = "Date") %>% 
+    filter(Date >= as_date("2022-09-01")) 
+
+ggplot(plot_dat, aes(x = Date)) +
+    geom_line(aes(y = closing_price, group = sample), color = "navy", alpha = 0.15) +
+    geom_line(aes(y = Close)) + 
+    ggtitle("Creating 10,000 Alternative Futures for the 'next' 30 days",
+            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+    scale_y_continuous(labels = dollar_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+```
+
+This is not to say that it is "correct." Every time the simulation is rerun, the 
+randomness of the experiment changes things slightly. Below you can see the 
+final experimental prices for the 10000 simulations compared to the actual final 
+price of `ETH`.
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+hist <- ggplot(plot_dat[plot_dat$Date == Sys.Date() - days(1), ], aes(x = closing_price)) + 
+    geom_histogram(fill = "navy", color = "white") + 
+    geom_vline(aes(xintercept = Close), color = "red") + 
+    ggtitle("Histogram of 10,000 Alternative\nFutures final prices",
+            subtitle = "Actual closing price is red line") + 
+    xlab("Closing Price") +
+    scale_x_continuous(labels = dollar_format()) + 
+    scale_y_continuous(labels = comma_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+boxp <- ggplot(plot_dat[plot_dat$Date == Sys.Date() - days(1), ], aes(x = closing_price)) + 
+    geom_boxplot() + 
+    geom_vline(aes(xintercept = Close), color = "red") + 
+    ggtitle("Boxplot of 10,000 Alternative\nFutures final prices",
+            subtitle = "Actual closing price is red line") + 
+    xlab("Closing Price") +
+    scale_x_continuous(labels = dollar_format()) + 
+    scale_y_continuous(labels = comma_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+gridExtra::grid.arrange(hist, boxp, nrow = 1)
+```
+
+### Step 4: Creating a Model to Choose "Winners"
+
+What I haven't done here but I did in my initial experiment is to run this 
+simulation over many different securities. With that data, I generated a 
+number of different features to be tested in the data. For example:
+
+1. Range of the simulated final prices
+2. Today's price compared to the maximum final price
+3. Today's price compared to the minimum final price
+4. The Interquartile range of the final prices
+5. Etc.
+
+I then used random forests and logistic regression (in hindsight, I may not want 
+to use that models as I'm not sure the assumption requiring independent 
+observations holds true). The target variable was binomial: did the stock go up? 
+
+## Rerunning the example on CMCSA
+
+Repeating the example on `CMCSA` to show that the model and idea is robust to 
+different types of securities.
+
+### Step 1: Get Historical Data & Calculate Daily Movement
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+dat <- get_dat("CMCSA")
+
+dat <- dat %>% 
+    mutate(last_close = lag(Close, 1),
+           percent_change = (Close - last_close) / last_close) %>% 
+    select(symbol, 
+           Date,
+           Close,
+           last_close,
+           percent_change)
+
+ggplot(dat, aes(x = Date, y = Close)) + 
+    geom_line() + 
+    scale_y_continuous(labels = dollar_format()) +
+    ggtitle("Price of CMCSA since September 2014") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+ggplot(dat, aes(x = Date, y = percent_change)) + 
+    geom_line(linewidth = 0.25) + 
+    scale_y_continuous(labels = percent_format()) +
+    ggtitle("Percent Change in Price of CMCSA since September 2014") + 
+    ylab("Percent Change in Price (Close to Close)") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+```
+
+### Step 2: Modeling the Distribution
+
+The created distribution, as desired, is very similar to the actuals, but with 
+slightly thicker tails. This allows for more volatility to be seen in the model, 
+especially on the downside. I intentionally wanted to be bearish (my bets were 
+all bullish) as a hedge. 
+
+Actual data are on the left, modeled data are on the right.
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+upper_scale <- 0.60
+lower_scale <- 0.65
+upper_shape <- 0.09
+lower_shape <- 0.1
+sample_size <- 20000
+
+perc_pos <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change >= 0, 
+                       TRUE, FALSE)) / length(dat$percent_change)
+perc_neg <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change < 0, 
+                       TRUE, FALSE)) / length(dat$percent_change)
+avg <- mean(dat$percent_change, na.rm = TRUE)
+std <- sd(dat$percent_change, na.rm = TRUE)
+
+evd_dist <- tibble(
+    percent_change = c(
+        rgev(sample_size * perc_pos, 
+             loc = avg, 
+             scale = upper_scale * std, 
+             shape = upper_shape),
+        -1 * rgev(sample_size * perc_neg, 
+                  loc = avg, 
+                  scale = lower_scale * std, 
+                  shape = lower_shape)))
+
+act <- ggplot(dat, aes(x = percent_change)) + 
+    geom_histogram(fill = "navy", color = "white") + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.05, 
+                                      max(evd_dist$percent_change) + 0.05), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Histogram of Percent Change in\nPrice of CMCSA since September 2014") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+mod <- ggplot(evd_dist, aes(x = percent_change)) + 
+    geom_histogram(fill = "navy", color = "white") + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.05, 
+                                      max(evd_dist$percent_change) + 0.05), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Histogram of Modeled Percent\nChange in Price of CMCSA") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    theme(panel.background = element_blank(),
+          panel.grid = element_line(color = "light gray"),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+gridExtra::grid.arrange(act, mod, nrow = 1)
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+act <- ggplot(dat, aes(x = percent_change)) + 
+    geom_boxplot() + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.02, 
+                                      max(evd_dist$percent_change) + 0.02), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Boxplot of Percent Change in\nPrice of CMCSA since September 2014") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    coord_flip() + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text.x = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+mod <- ggplot(evd_dist, aes(x = percent_change)) + 
+    geom_boxplot() + 
+    scale_x_continuous(limits = c(min(evd_dist$percent_change) - 0.02, 
+                                      max(evd_dist$percent_change) + 0.02), 
+                       labels = percent_format()) +
+    scale_y_continuous(labels = comma_format()) +
+    ggtitle("Boxplot of Modeled Percent\nChange in Price of CMCSA") + 
+    xlab("Percent Change in Price (Close to Close)") + 
+    coord_flip() + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text.x = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+gridExtra::grid.arrange(act, mod, nrow = 1)
+```
+
+### Step 3: The Monte Carlo Simulation
+
+A Monte Carlo simulation allows us to create alternative futures randomly. The 
+idea is that if you simulate enough times, you'll get an idea of what is 
+possible and what can be expected (read: more likely to occur). 
+
+This first plot shows a single random future generated. If the actual price 
+(black) wasn't plotted, too, one could be fooled into thinking this "future" 
+actually happened. 
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+start_date <- dat %>% 
+    filter(Date == Sys.Date() - days(31)) %>% 
+    pull(Date)
+start_price <- dat %>% 
+    filter(Date == Sys.Date() - days(31)) %>% 
+    pull(Close)
+
+mc_dat <- tibble(
+    Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
+    perc_change = c(NA, sample(evd_dist$percent_change, 
+                         size = 30, 
+                         replace = TRUE) + 1),
+    closing_price = c(start_price, rep(NA, 30))
+)
+
+for (da in 2:31) {
+    mc_dat$closing_price[da] <- mc_dat$closing_price[da - 1] * 
+        mc_dat$perc_change[da]
+    
+    mc_dat$closing_price[da] <- ifelse(mc_dat$closing_price[da] < 0, 0,
+                                       mc_dat$closing_price[da])
+}
+
+plot_dat <- dat %>% 
+    left_join(mc_dat, by = "Date") %>% 
+    filter(Date >= as_date("2022-09-01")) 
+
+ggplot(plot_dat, aes(x = Date)) +
+    geom_line(aes(y = Close)) + 
+    geom_line(aes(y = closing_price), color = "navy", alpha = 0.5) +
+    ggtitle("Creating a Singular Alternative Future for the 'next' 30 days",
+            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+    scale_y_continuous(labels = dollar_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+num_sims <- 10000
+
+mc_dat <- tibble(
+    Date = rep(seq.Date(start_date, Sys.Date() - days(1), by = "day"), num_sims),
+    perc_change = sample(evd_dist$percent_change, 
+                         size = 31 * num_sims, 
+                         replace = TRUE) + 1,
+    closing_price = rep(c(start_price, rep(NA, 30)), num_sims),
+    sample = rep(1:num_sims, each = 31)
+) %>% 
+    mutate(wday = weekdays(Date)) %>% 
+    filter(!wday %in% c("Saturday", "Sunday"))
+
+dates <- sort(unique(mc_dat$Date))
+
+for (num in 1:length(dates)) {
+    da <- as_date(dates[num])
+    yda <- as_date(dates[num - 1])
+    
+    if (da == as_date("2022-10-14")) {
+        next
+    }
+    
+    mc_dat$closing_price[mc_dat$Date == da] <- mc_dat$closing_price[mc_dat$Date == yda] * 
+        mc_dat$perc_change[mc_dat$Date == da]
+}
+
+plot_dat <- dat %>% 
+    left_join(mc_dat, by = "Date") %>% 
+    filter(Date >= as_date("2022-09-01")) 
+
+ggplot(plot_dat, aes(x = Date)) +
+    geom_line(aes(y = closing_price, group = sample), color = "navy", alpha = 0.15) +
+    geom_line(aes(y = Close)) + 
+    ggtitle("Creating 10,000 Alternative Futures for the 'next' 30 days",
+            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+    scale_y_continuous(labels = dollar_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+```
+
+Below you can see the 
+final experimental prices for the 10,000 simulations compared to the actual final 
+price of `CMCSA`.
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| out-width: "100%"
+#| fig-align: "center"
+
+hist <- ggplot(plot_dat[plot_dat$Date == as_date("2022-11-11"), ], aes(x = closing_price)) + 
+    geom_histogram(fill = "navy", color = "white") + 
+    geom_vline(aes(xintercept = Close), color = "red") + 
+    ggtitle("Histogram of 10,000 Alternative\nFutures final prices",
+            subtitle = "Actual closing price is red line") + 
+    xlab("Closing Price") +
+    scale_x_continuous(labels = dollar_format()) + 
+    scale_y_continuous(labels = comma_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+boxp <- ggplot(plot_dat[plot_dat$Date == as_date("2022-11-11"), ], aes(x = closing_price)) + 
+    geom_boxplot() + 
+    geom_vline(aes(xintercept = Close), color = "red") + 
+    ggtitle("Boxplot of 10,000 Alternative\nFutures final prices",
+            subtitle = "Actual closing price is red line") + 
+    xlab("Closing Price") +
+    scale_x_continuous(labels = dollar_format()) + 
+    scale_y_continuous(labels = comma_format()) + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"))
+
+gridExtra::grid.arrange(hist, boxp, nrow = 1)
+```
