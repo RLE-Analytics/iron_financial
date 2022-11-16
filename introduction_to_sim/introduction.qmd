@@ -50,6 +50,8 @@ library(dplyr)
 library(ggplot2)
 library(scales)
 library(evd)
+library(purrr)
+library(tidyr)
 
 options(scipen = 999)
 
@@ -286,21 +288,16 @@ start_price <- dat %>%
     filter(Date == Sys.Date() - days(31)) %>% 
     pull(Close)
 
-mc_dat <- tibble(
-    Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
-    perc_change = c(NA, sample(evd_dist$percent_change, 
-                         size = 30, 
-                         replace = TRUE) + 1),
-    closing_price = c(start_price, rep(NA, 30))
-)
+mc_dat <- tibble(Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
+                 weekday = weekdays(Date)) %>%
+    mutate(perc_change = c(start_price, sample(evd_dist$percent_change, 
+                                               size = length(Date) - 1, 
+                                               replace = TRUE) + 1),
+    closing_price = cumprod(perc_change))
 
-for (da in 2:31) {
-    mc_dat$closing_price[da] <- mc_dat$closing_price[da - 1] * 
-        mc_dat$perc_change[da]
-    
-    mc_dat$closing_price[da] <- ifelse(mc_dat$closing_price[da] < 0, 0,
-                                       mc_dat$closing_price[da])
-}
+plot_dat <- dat %>% 
+    left_join(mc_dat, by = "Date") %>% 
+    filter(Date >= as_date("2022-09-01")) 
 
 plot_dat <- dat %>% 
     left_join(mc_dat, by = "Date") %>% 
@@ -336,25 +333,33 @@ num_sims <- 10000
 
 mc_dat <- tibble(
     Date = rep(seq.Date(start_date, Sys.Date() - days(1), by = "day"), num_sims),
-    perc_change = sample(evd_dist$percent_change, 
-                         size = 31 * num_sims, 
-                         replace = TRUE) + 1,
-    closing_price = rep(c(start_price, rep(NA, 30)), num_sims),
-    sample = rep(1:num_sims, each = 31)
-)
+    weekday = weekdays(Date),
+    ) 
 
-for (da in seq.Date(start_date, Sys.Date() - days(1), by = "day")) {
-    da <- as_date(da)
-    if (da == as_date("2022-10-14")) {
-        next
-    }
-    
-    mc_dat$closing_price[mc_dat$Date == da] <- mc_dat$closing_price[mc_dat$Date == da - days(1)] * 
-        mc_dat$perc_change[mc_dat$Date == da]
-}
+num_days <- dim(mc_dat)[1] / num_sims
+
+mc_dat_wide <- mc_dat %>% 
+    mutate(rnum = row_number(), 
+           sample = rep(1:num_sims, each = num_days),
+           perc_change = sample(evd_dist$percent_change, 
+                         size = length(Date), 
+                         replace = TRUE) + 1,
+           perc_change = ifelse(rnum %% num_days == 1, 
+                                start_price, 
+                                perc_change)) %>% 
+    select(Date, sample, perc_change) %>% 
+    pivot_wider(names_from = sample, values_from = perc_change) 
+           
+cprod <- mc_dat_wide %>% 
+    select(where(is.numeric)) %>% 
+    map_dfc(cumprod)
+
+mc_dat_final <- cprod %>% 
+    mutate(Date = mc_dat_wide$Date) %>% 
+    pivot_longer(!Date, names_to = "sample", values_to = "closing_price")
 
 plot_dat <- dat %>% 
-    left_join(mc_dat, by = "Date") %>% 
+    left_join(mc_dat_final, by = "Date") %>% 
     filter(Date >= as_date("2022-09-01")) 
 
 ggplot(plot_dat, aes(x = Date)) +
@@ -612,27 +617,21 @@ actually happened.
 #| fig-align: "center"
 
 start_date <- dat %>% 
-    filter(Date == Sys.Date() - days(31)) %>% 
-    pull(Date)
+    arrange(desc(Date)) %>% 
+    pull(Date) %>% 
+    pluck(21)
 start_price <- dat %>% 
-    filter(Date == Sys.Date() - days(31)) %>% 
-    pull(Close)
+    arrange(desc(Date)) %>% 
+    pull(Close) %>% 
+    pluck(21)
 
-mc_dat <- tibble(
-    Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
-    perc_change = c(NA, sample(evd_dist$percent_change, 
-                         size = 30, 
-                         replace = TRUE) + 1),
-    closing_price = c(start_price, rep(NA, 30))
-)
-
-for (da in 2:31) {
-    mc_dat$closing_price[da] <- mc_dat$closing_price[da - 1] * 
-        mc_dat$perc_change[da]
-    
-    mc_dat$closing_price[da] <- ifelse(mc_dat$closing_price[da] < 0, 0,
-                                       mc_dat$closing_price[da])
-}
+mc_dat <- tibble(Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
+                 weekday = weekdays(Date)) %>% 
+    filter(!weekday %in% c("Saturday", "Sunday")) %>% 
+    mutate(perc_change = c(start_price, sample(evd_dist$percent_change, 
+                                               size = length(Date) - 1, 
+                                               replace = TRUE) + 1),
+    closing_price = cumprod(perc_change))
 
 plot_dat <- dat %>% 
     left_join(mc_dat, by = "Date") %>% 
@@ -664,31 +663,34 @@ num_sims <- 10000
 
 mc_dat <- tibble(
     Date = rep(seq.Date(start_date, Sys.Date() - days(1), by = "day"), num_sims),
-    perc_change = sample(evd_dist$percent_change, 
-                         size = 31 * num_sims, 
+    weekday = weekdays(Date),
+    ) %>% 
+    filter(!weekday %in% c("Saturday", "Sunday")) 
+
+num_days <- dim(mc_dat)[1] / num_sims
+
+mc_dat_wide <- mc_dat %>% 
+    mutate(rnum = row_number(), 
+           sample = rep(1:num_sims, each = num_days),
+           perc_change = sample(evd_dist$percent_change, 
+                         size = length(Date), 
                          replace = TRUE) + 1,
-    closing_price = rep(c(start_price, rep(NA, 30)), num_sims),
-    sample = rep(1:num_sims, each = 31)
-) %>% 
-    mutate(wday = weekdays(Date)) %>% 
-    filter(!wday %in% c("Saturday", "Sunday"))
+           perc_change = ifelse(rnum %% 20 == 1, 
+                                start_price, 
+                                perc_change)) %>% 
+    select(Date, sample, perc_change) %>% 
+    pivot_wider(names_from = sample, values_from = perc_change) 
+           
+cprod <- mc_dat_wide %>% 
+    select(where(is.numeric)) %>% 
+    map_dfc(cumprod)
 
-dates <- sort(unique(mc_dat$Date))
-
-for (num in 1:length(dates)) {
-    da <- as_date(dates[num])
-    yda <- as_date(dates[num - 1])
-    
-    if (da == as_date("2022-10-14")) {
-        next
-    }
-    
-    mc_dat$closing_price[mc_dat$Date == da] <- mc_dat$closing_price[mc_dat$Date == yda] * 
-        mc_dat$perc_change[mc_dat$Date == da]
-}
+mc_dat_final <- cprod %>% 
+    mutate(Date = mc_dat_wide$Date) %>% 
+    pivot_longer(!Date, names_to = "sample", values_to = "closing_price")
 
 plot_dat <- dat %>% 
-    left_join(mc_dat, by = "Date") %>% 
+    left_join(mc_dat_final, by = "Date") %>% 
     filter(Date >= as_date("2022-09-01")) 
 
 ggplot(plot_dat, aes(x = Date)) +

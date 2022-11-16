@@ -185,30 +185,32 @@ g-table-intro h4 {
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scales)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(evd)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Get Stock Data</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>get_dat <span class="ot">&lt;-</span> <span class="cf">function</span>(symbol, <span class="at">freq_num =</span> <span class="dv">1</span>, <span class="at">freq =</span> <span class="st">"d"</span>, <span class="at">period1 =</span> <span class="dv">1410825600</span>, </span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>                    <span class="at">period2 =</span> <span class="fu">as.numeric</span>(<span class="fu">format</span>(<span class="fu">as_datetime</span>(<span class="fu">Sys.time</span>()), <span class="st">"%s"</span>))) {</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    symbol <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">."</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">-"</span>, symbol)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    URL <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"https://query1.finance.yahoo.com/v7/finance/download/"</span>, </span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                  symbol, <span class="st">"?period1="</span>, period1, <span class="st">"&amp;period2="</span>, period2, </span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"&amp;interval="</span>, freq_num, freq, </span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"&amp;events=history&amp;includeAdjustedClose=true"</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    dat <span class="ot">&lt;-</span> <span class="fu">GET</span>(URL)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    dat <span class="ot">&lt;-</span> <span class="fu">content</span>(dat, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>, <span class="at">encoding =</span> <span class="st">"UTF-8"</span>)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">class</span>(dat)) <span class="sc">&lt;</span> <span class="dv">4</span>) {</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">"shit is breaking on "</span>, symbol))</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    dat<span class="sc">$</span>symbol <span class="ot">&lt;-</span> symbol</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Get Stock Data</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>get_dat <span class="ot">&lt;-</span> <span class="cf">function</span>(symbol, <span class="at">freq_num =</span> <span class="dv">1</span>, <span class="at">freq =</span> <span class="st">"d"</span>, <span class="at">period1 =</span> <span class="dv">1410825600</span>, </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                    <span class="at">period2 =</span> <span class="fu">as.numeric</span>(<span class="fu">format</span>(<span class="fu">as_datetime</span>(<span class="fu">Sys.time</span>()), <span class="st">"%s"</span>))) {</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    symbol <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">."</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">-"</span>, symbol)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    URL <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"https://query1.finance.yahoo.com/v7/finance/download/"</span>, </span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                  symbol, <span class="st">"?period1="</span>, period1, <span class="st">"&amp;period2="</span>, period2, </span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"&amp;interval="</span>, freq_num, freq, </span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"&amp;events=history&amp;includeAdjustedClose=true"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    dat <span class="ot">&lt;-</span> <span class="fu">GET</span>(URL)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    dat <span class="ot">&lt;-</span> <span class="fu">content</span>(dat, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>, <span class="at">encoding =</span> <span class="st">"UTF-8"</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">class</span>(dat)) <span class="sc">&lt;</span> <span class="dv">4</span>) {</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">"shit is breaking on "</span>, symbol))</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(dat)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    dat<span class="sc">$</span>symbol <span class="ot">&lt;-</span> symbol</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(dat)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="introduction" class="level2">
@@ -411,37 +413,32 @@ g-table-intro h4 {
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">==</span> <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">31</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(Close)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>mc_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Date =</span> <span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>),</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_change =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                         <span class="at">size =</span> <span class="dv">30</span>, </span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>),</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">closing_price =</span> <span class="fu">c</span>(start_price, <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">30</span>))</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (da <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">31</span>) {</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    mc_dat<span class="sc">$</span>closing_price[da] <span class="ot">&lt;-</span> mc_dat<span class="sc">$</span>closing_price[da <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">*</span> </span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        mc_dat<span class="sc">$</span>perc_change[da]</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    mc_dat<span class="sc">$</span>closing_price[da] <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(mc_dat<span class="sc">$</span>closing_price[da] <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="dv">0</span>,</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>                                       mc_dat<span class="sc">$</span>closing_price[da])</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating a Singular Alternative Future for the 'next' 30 days"</span>,</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>mc_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">Date =</span> <span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">weekday =</span> <span class="fu">weekdays</span>(Date)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">perc_change =</span> <span class="fu">c</span>(start_price, <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">size =</span> <span class="fu">length</span>(Date) <span class="sc">-</span> <span class="dv">1</span>, </span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">closing_price =</span> <span class="fu">cumprod</span>(perc_change))</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating a Singular Alternative Future for the 'next' 30 days"</span>,</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -459,38 +456,46 @@ g-table-intro h4 {
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>mc_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">Date =</span> <span class="fu">rep</span>(<span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>), num_sims),</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_change =</span> <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                         <span class="at">size =</span> <span class="dv">31</span> <span class="sc">*</span> num_sims, </span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">closing_price =</span> <span class="fu">rep</span>(<span class="fu">c</span>(start_price, <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">30</span>)), num_sims),</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">sample =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>num_sims, <span class="at">each =</span> <span class="dv">31</span>)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (da <span class="cf">in</span> <span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>)) {</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    da <span class="ot">&lt;-</span> <span class="fu">as_date</span>(da)</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (da <span class="sc">==</span> <span class="fu">as_date</span>(<span class="st">"2022-10-14"</span>)) {</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">next</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    mc_dat<span class="sc">$</span>closing_price[mc_dat<span class="sc">$</span>Date <span class="sc">==</span> da] <span class="ot">&lt;-</span> mc_dat<span class="sc">$</span>closing_price[mc_dat<span class="sc">$</span>Date <span class="sc">==</span> da <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>)] <span class="sc">*</span> </span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        mc_dat<span class="sc">$</span>perc_change[mc_dat<span class="sc">$</span>Date <span class="sc">==</span> da]</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">weekday =</span> <span class="fu">weekdays</span>(Date),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    ) </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>num_days <span class="ot">&lt;-</span> <span class="fu">dim</span>(mc_dat)[<span class="dv">1</span>] <span class="sc">/</span> num_sims</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>mc_dat_wide <span class="ot">&lt;-</span> mc_dat <span class="sc">%&gt;%</span> </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">rnum =</span> <span class="fu">row_number</span>(), </span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">sample =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>num_sims, <span class="at">each =</span> num_days),</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">perc_change =</span> <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>                         <span class="at">size =</span> <span class="fu">length</span>(Date), </span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                         <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">perc_change =</span> <span class="fu">ifelse</span>(rnum <span class="sc">%%</span> num_days <span class="sc">==</span> <span class="dv">1</span>, </span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>                                start_price, </span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                                perc_change)) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(Date, sample, perc_change) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> sample, <span class="at">values_from =</span> perc_change) </span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>           </span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>cprod <span class="ot">&lt;-</span> mc_dat_wide <span class="sc">%&gt;%</span> </span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">where</span>(is.numeric)) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_dfc</span>(cumprod)</span>
 <span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price, <span class="at">group =</span> sample), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating 10,000 Alternative Futures for the 'next' 30 days"</span>,</span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>mc_dat_final <span class="ot">&lt;-</span> cprod <span class="sc">%&gt;%</span> </span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Date =</span> mc_dat_wide<span class="sc">$</span>Date) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="sc">!</span>Date, <span class="at">names_to =</span> <span class="st">"sample"</span>, <span class="at">values_to =</span> <span class="st">"closing_price"</span>)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat_final, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price, <span class="at">group =</span> sample), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating 10,000 Alternative Futures for the 'next' 30 days"</span>,</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -736,43 +741,37 @@ g-table-intro h4 {
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">==</span> <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">31</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(Date)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>start_price <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">==</span> <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">31</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(Close)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>mc_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Date =</span> <span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>),</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_change =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                         <span class="at">size =</span> <span class="dv">30</span>, </span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>),</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">closing_price =</span> <span class="fu">c</span>(start_price, <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">30</span>))</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (da <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">31</span>) {</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    mc_dat<span class="sc">$</span>closing_price[da] <span class="ot">&lt;-</span> mc_dat<span class="sc">$</span>closing_price[da <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">*</span> </span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>        mc_dat<span class="sc">$</span>perc_change[da]</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    mc_dat<span class="sc">$</span>closing_price[da] <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(mc_dat<span class="sc">$</span>closing_price[da] <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="dv">0</span>,</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>                                       mc_dat<span class="sc">$</span>closing_price[da])</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating a Singular Alternative Future for the 'next' 30 days"</span>,</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(Date)) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(Date) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pluck</span>(<span class="dv">21</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>start_price <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(Date)) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(Close) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pluck</span>(<span class="dv">21</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>mc_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">Date =</span> <span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>),</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                 <span class="at">weekday =</span> <span class="fu">weekdays</span>(Date)) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>weekday <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Saturday"</span>, <span class="st">"Sunday"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">perc_change =</span> <span class="fu">c</span>(start_price, <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">size =</span> <span class="fu">length</span>(Date) <span class="sc">-</span> <span class="dv">1</span>, </span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">closing_price =</span> <span class="fu">cumprod</span>(perc_change))</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating a Singular Alternative Future for the 'next' 30 days"</span>,</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -789,44 +788,47 @@ g-table-intro h4 {
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>mc_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">Date =</span> <span class="fu">rep</span>(<span class="fu">seq.Date</span>(start_date, <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="at">by =</span> <span class="st">"day"</span>), num_sims),</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_change =</span> <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                         <span class="at">size =</span> <span class="dv">31</span> <span class="sc">*</span> num_sims, </span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>,</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">closing_price =</span> <span class="fu">rep</span>(<span class="fu">c</span>(start_price, <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">30</span>)), num_sims),</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">sample =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>num_sims, <span class="at">each =</span> <span class="dv">31</span>)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">wday =</span> <span class="fu">weekdays</span>(Date)) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>wday <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Saturday"</span>, <span class="st">"Sunday"</span>))</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>dates <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(mc_dat<span class="sc">$</span>Date))</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (num <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(dates)) {</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    da <span class="ot">&lt;-</span> <span class="fu">as_date</span>(dates[num])</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    yda <span class="ot">&lt;-</span> <span class="fu">as_date</span>(dates[num <span class="sc">-</span> <span class="dv">1</span>])</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (da <span class="sc">==</span> <span class="fu">as_date</span>(<span class="st">"2022-10-14"</span>)) {</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">next</span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    mc_dat<span class="sc">$</span>closing_price[mc_dat<span class="sc">$</span>Date <span class="sc">==</span> da] <span class="ot">&lt;-</span> mc_dat<span class="sc">$</span>closing_price[mc_dat<span class="sc">$</span>Date <span class="sc">==</span> yda] <span class="sc">*</span> </span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>        mc_dat<span class="sc">$</span>perc_change[mc_dat<span class="sc">$</span>Date <span class="sc">==</span> da]</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price, <span class="at">group =</span> sample), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating 10,000 Alternative Futures for the 'next' 30 days"</span>,</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">weekday =</span> <span class="fu">weekdays</span>(Date),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>weekday <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Saturday"</span>, <span class="st">"Sunday"</span>)) </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>num_days <span class="ot">&lt;-</span> <span class="fu">dim</span>(mc_dat)[<span class="dv">1</span>] <span class="sc">/</span> num_sims</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>mc_dat_wide <span class="ot">&lt;-</span> mc_dat <span class="sc">%&gt;%</span> </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">rnum =</span> <span class="fu">row_number</span>(), </span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">sample =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>num_sims, <span class="at">each =</span> num_days),</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>           <span class="at">perc_change =</span> <span class="fu">sample</span>(evd_dist<span class="sc">$</span>percent_change, </span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>                         <span class="at">size =</span> <span class="fu">length</span>(Date), </span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>                         <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">perc_change =</span> <span class="fu">ifelse</span>(rnum <span class="sc">%%</span> <span class="dv">20</span> <span class="sc">==</span> <span class="dv">1</span>, </span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>                                start_price, </span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>                                perc_change)) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(Date, sample, perc_change) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> sample, <span class="at">values_from =</span> perc_change) </span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>           </span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>cprod <span class="ot">&lt;-</span> mc_dat_wide <span class="sc">%&gt;%</span> </span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">where</span>(is.numeric)) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_dfc</span>(cumprod)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>mc_dat_final <span class="ot">&lt;-</span> cprod <span class="sc">%&gt;%</span> </span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Date =</span> mc_dat_wide<span class="sc">$</span>Date) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="sc">!</span>Date, <span class="at">names_to =</span> <span class="st">"sample"</span>, <span class="at">values_to =</span> <span class="st">"closing_price"</span>)</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>plot_dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(mc_dat_final, <span class="at">by =</span> <span class="st">"Date"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Date <span class="sc">&gt;=</span> <span class="fu">as_date</span>(<span class="st">"2022-09-01"</span>)) </span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_dat, <span class="fu">aes</span>(<span class="at">x =</span> Date)) <span class="sc">+</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> closing_price, <span class="at">group =</span> sample), <span class="at">color =</span> <span class="st">"navy"</span>, <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Close)) <span class="sc">+</span> </span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"Creating 10,000 Alternative Futures for the 'next' 30 days"</span>,</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>            <span class="at">subtitle =</span> <span class="st">"Simulation begins on 10/15</span><span class="sc">\n</span><span class="st">Actual price is black; simulated price is navy"</span>) <span class="sc">+</span> </span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span> </span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"light gray"</span>),</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
