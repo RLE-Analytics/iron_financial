@@ -89,16 +89,18 @@ def get_simulation(stock,
     
     puts = opt_chain.puts
     puts['expiration_date'] = option_date
+    puts['strike_minus_last'] = puts['strike'] - ((puts['ask'] + puts['bid'] / 2))
 
-    for strp in puts.strike:
-        puts.loc[puts['strike'] == strp, 'likelihood_below'] = (
+    for strp in puts.strike_minus_last:
+        puts.loc[puts['strike_minus_last'] == strp, 'likelihood_below'] = (
             sum(final_prices < strp) / num_samples)
     
     calls = opt_chain.calls
     calls['expiration_date'] = option_date
+    calls['strike_plus_last'] = calls['strike'] + ((calls['ask'] + calls['bid'] / 2))
 
-    for strp in calls.strike:
-        calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
+    for strp in calls.strike_plus_last:
+        calls.loc[calls['strike_plus_last'] == strp, 'likelihood_above'] = (
             sum(final_prices > strp) / num_samples)
     
     puts = puts[['expiration_date', 'strike', 'likelihood_below', 'lastPrice',
@@ -115,7 +117,7 @@ def get_simulation(stock,
                          'inTheMoney': 'In the Money?',
                          'contractSize': 'Contract Size',
                          'expiration_date': 'Expiration Date',
-                         'likelihood_below': 'Likelihood Price goes Below Strike'}),
+                         'likelihood_below': 'Llhd Pr Blw St-LP'}),
                         axis = 'columns')
     
     calls = calls[['expiration_date', 'strike', 'likelihood_above', 'lastPrice',
@@ -132,7 +134,7 @@ def get_simulation(stock,
                          'inTheMoney': 'In the Money?',
                          'contractSize': 'Contract Size',
                          'expiration_date': 'Expiration Date',
-                         'likelihood_above': 'Likelihood Price goes Above Strike'}),
+                         'likelihood_above': 'Llhd Pr Abv St+LP'}),
                         axis = 'columns')
     
     return(puts, calls)
@@ -153,21 +155,25 @@ def main() -> None:
     )
     
     current_price = get_hist_data(ticker, datetime.utcnow().date().isoformat())
-    price = current_price['Close'].item()
+    price = round(current_price['Close'].item(), 2)
     
     st.header(f'Options Evaluations for {STOCK}')
     st.text(f'Option Expiration Date of {options_selection}')
-    st.text(f'Current stock price: {price}')
+    st.text(f'Current stock price: ${price}')
     
     puts, calls = get_simulation(ticker, options_selection)
     
-    st.subheader("Put Options Data")
+    put_tab, call_tab = st.tabs(["Puts", "Calls"])
     
-    st.dataframe(puts)
+    with put_tab:
+        st.subheader("Put Options Data")
+        
+        st.dataframe(puts)
     
-    st.subheader("Call Options Data")
-    
-    st.dataframe(calls)
+    with call_tab:
+        st.subheader("Call Options Data")
+        
+        st.dataframe(calls)
     
 if __name__ == "__main__":
     st.set_page_config(
