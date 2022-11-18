@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from scipy.stats import genextreme
 from random import choices
+import plotly.express as px
 
 def get_ticker(STOCK):
     stock = yf.Ticker(STOCK)
@@ -139,7 +140,39 @@ def get_simulation(stock,
                          'likelihood_above': 'Llhd Pr Abv St+LP'}),
                         axis = 'columns')
     
-    return(puts, calls)
+    return(puts, calls, final_prices, hist_price)
+
+def price_chart(hist_price, STOCK):
+    cutoff = datetime.today().date() - timedelta(days = 365)
+    cutoff = cutoff.isoformat()
+    
+    hist_price = hist_price.loc[hist_price['Date'] > cutoff]
+    
+    fig = px.line(hist_price, 
+                  x = 'Date', 
+                  y = 'Close',
+                  title = f'{STOCK} Prices for Last Year')
+    fig.update_layout(yaxis_tickprefix = '$')
+    return(fig)
+
+def box_final_prices(final_prices, current_price):
+    fig = px.box(final_prices,
+                 x = "final_price",
+                 labels = {"final_price": "Final Simulated Price"},
+                 title = "Boxplot of Simulated Prices (Current stock price in red)")
+    fig.add_vline(x = current_price, line_color = 'firebrick')
+    fig.update_layout(xaxis_tickprefix = '$')
+    return(fig)
+
+def hist_final_prices(final_prices, current_price):
+    fig = px.histogram(final_prices, 
+                       x = "final_price", 
+                       histnorm = 'probability density',
+                       labels = {"final_price": "Final Simulated Price"},
+                       title = "Histogram of Simulated Prices (Current stock price in red)")
+    fig.add_vline(x = current_price, line_color = 'firebrick')
+    fig.update_layout(xaxis_tickprefix = '$')
+    return(fig)
 
 def main() -> None:
     
@@ -163,9 +196,11 @@ def main() -> None:
     st.text(f'Option Expiration Date of {options_selection}')
     st.text(f'Current stock price: ${price}')
     
-    puts, calls = get_simulation(ticker, options_selection)
+    puts, calls, final_prices, hist_price = get_simulation(ticker, options_selection)
     
-    put_tab, call_tab = st.tabs(["Puts", "Calls"])
+    put_tab, call_tab, price_tab = st.tabs([f'{STOCK} Puts', 
+                                            f'{STOCK} Calls', 
+                                            f'Simulated {STOCK} Prices'])
     
     with put_tab:
         st.subheader("Put Options Data")
@@ -176,6 +211,18 @@ def main() -> None:
         st.subheader("Call Options Data")
         
         st.dataframe(calls)
+        
+    with price_tab:
+        price_line = price_chart(hist_price, STOCK)
+        st.plotly_chart(price_line, use_container_width = True)
+        
+        final_prices = pd.DataFrame({"final_price": final_prices})
+        
+        box = box_final_prices(final_prices, price)
+        st.plotly_chart(box, use_container_width = True)
+        
+        hist = hist_final_prices(final_prices, price)
+        st.plotly_chart(hist, use_container_width = True)
     
 if __name__ == "__main__":
     st.set_page_config(
