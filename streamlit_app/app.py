@@ -89,7 +89,7 @@ def get_simulation(stock,
     
     puts = opt_chain.puts
     puts['expiration_date'] = option_date
-    puts['strike_minus_last'] = puts['strike'] - ((puts['ask'] + puts['bid'] / 2))
+    puts['strike_minus_last'] = puts['strike'] - ((puts['ask'] + puts['bid']) / 2)
 
     for strp in puts.strike_minus_last:
         puts.loc[puts['strike_minus_last'] == strp, 'likelihood_below'] = (
@@ -97,13 +97,14 @@ def get_simulation(stock,
     
     calls = opt_chain.calls
     calls['expiration_date'] = option_date
-    calls['strike_plus_last'] = calls['strike'] + ((calls['ask'] + calls['bid'] / 2))
+    calls['strike_plus_last'] = calls['strike'] + ((calls['ask'] + calls['bid']) / 2)
 
     for strp in calls.strike_plus_last:
         calls.loc[calls['strike_plus_last'] == strp, 'likelihood_above'] = (
             sum(final_prices > strp) / num_samples)
     
-    puts = puts[['expiration_date', 'strike', 'likelihood_below', 'lastPrice',
+    puts = puts[['expiration_date', 'strike', 'strike_minus_last', 
+                 'likelihood_below', 'lastPrice',
                  'bid', 'ask', 'change', 'percentChange', 'volume', 
                  'openInterest', 'impliedVolatility', 'inTheMoney', 
                  'contractSize', 'currency', 'contractSymbol', 'lastTradeDate']]
@@ -120,7 +121,8 @@ def get_simulation(stock,
                          'likelihood_below': 'Llhd Pr Blw St-LP'}),
                         axis = 'columns')
     
-    calls = calls[['expiration_date', 'strike', 'likelihood_above', 'lastPrice',
+    calls = calls[['expiration_date', 'strike', 'strike_plus_last', 
+                   'likelihood_above', 'lastPrice',
                    'bid', 'ask', 'change', 'percentChange', 'volume', 
                    'openInterest', 'impliedVolatility', 'inTheMoney', 
                    'contractSize', 'currency', 'contractSymbol', 'lastTradeDate']]
