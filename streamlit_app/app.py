@@ -24,6 +24,7 @@ def get_hist_data(stock, start = '2000-01-01'):
 
 def get_simulation(stock, 
                    option_date,
+                   symbol,
                    num_samples = 10000,
                    sample_size = 20000, 
                    upper_scale = 0.60, 
@@ -46,8 +47,7 @@ def get_simulation(stock,
     start = today - timedelta(days = num_trading_days)
 
     start = start.isoformat()
-    start_date = datetime.today().date() - timedelta(days = 1)
-    start_date = start_date.isoformat()
+    start_date = get_latest_day(symbol)
     
     hist_price = get_hist_data(stock)
     
@@ -73,7 +73,7 @@ def get_simulation(stock,
 
     samp = np.append(samp_upper, samp_lower)
 
-    sample_col = pd.Series(range(1,num_trading_days+1)).repeat(num_samples)
+    sample_col = pd.Series(range(1, num_trading_days + 1)).repeat(num_samples)
     dates_col = dates['Date'].repeat(num_samples)
     sample_values = np.array(choices(samp + 1, 
                                      k = num_samples * num_trading_days
@@ -90,7 +90,7 @@ def get_simulation(stock,
     
     puts = opt_chain.puts
     puts['expiration_date'] = option_date
-    puts['strike_minus_last'] = puts['strike'] - ((puts['ask'] + puts['bid']) / 2)
+    puts['strike_minus_last'] = puts['strike'] - puts['ask']
 
     for strp in puts.strike_minus_last:
         puts.loc[puts['strike_minus_last'] == strp, 'likelihood_below'] = (
@@ -98,7 +98,7 @@ def get_simulation(stock,
     
     calls = opt_chain.calls
     calls['expiration_date'] = option_date
-    calls['strike_plus_last'] = calls['strike'] + ((calls['ask'] + calls['bid']) / 2)
+    calls['strike_plus_last'] = calls['strike'] + calls['ask']
 
     for strp in calls.strike_plus_last:
         calls.loc[calls['strike_plus_last'] == strp, 'likelihood_above'] = (
@@ -112,6 +112,7 @@ def get_simulation(stock,
     
     puts = puts.rename(({'contractSymbol': 'Contract Symbol',
                          'lastTradeDate': 'Last Trade Date',
+                         'strike_minus_last': 'Effective Price',
                          'lastPrice': 'Last Price',
                          'percentChange': 'Percent Change',
                          'openInterest': 'Open Interest',
@@ -119,7 +120,7 @@ def get_simulation(stock,
                          'inTheMoney': 'In the Money?',
                          'contractSize': 'Contract Size',
                          'expiration_date': 'Expiration Date',
-                         'likelihood_below': 'Llhd Pr Blw St-LP'}),
+                         'likelihood_below': 'Llhd Blw EP'}),
                         axis = 'columns')
     
     calls = calls[['expiration_date', 'strike', 'strike_plus_last', 
@@ -130,6 +131,7 @@ def get_simulation(stock,
                         
     calls = calls.rename(({'contractSymbol': 'Contract Symbol',
                          'lastTradeDate': 'Last Trade Date',
+                         'strike_plus_last': 'Effective Price',
                          'lastPrice': 'Last Price',
                          'percentChange': 'Percent Change',
                          'openInterest': 'Open Interest',
@@ -137,7 +139,7 @@ def get_simulation(stock,
                          'inTheMoney': 'In the Money?',
                          'contractSize': 'Contract Size',
                          'expiration_date': 'Expiration Date',
-                         'likelihood_above': 'Llhd Pr Abv St+LP'}),
+                         'likelihood_above': 'Llhd Abv EP'}),
                         axis = 'columns')
     
     return(puts, calls, final_prices, hist_price)
@@ -174,6 +176,40 @@ def hist_final_prices(final_prices, current_price):
     fig.update_layout(xaxis_tickprefix = '$')
     return(fig)
 
+def get_latest_day(stock, current_date = datetime.utcnow().date() - timedelta(1)):
+    if ('-USD' in stock or 
+            (current_date.weekday() >= 0 and 
+                current_date.weekday() <= 4)):
+        return(current_date.isoformat())
+    else:
+        if current_date.weekday() == 5:
+            current_date = current_date - timedelta(days = 1)
+        else: 
+            current_date = current_date - timedelta(days = 2)
+    
+    return(current_date.isoformat())
+
+def strike_to_effective_plot(dat, current_price):
+    fig = px.bar(dat, x = 'strike', y = 'Effective Price')
+    fig.add_hline(y = current_price, line_color = 'firebrick')
+    fig.update_layout(xaxis_tickprefix = '$',
+                      yaxis_tickprefix = '$')
+    return(fig)
+    
+
+def effective_to_prob(dat, current_price, puts):
+    if puts:
+        dat['Llhd Blw EP'] = dat['Llhd Blw EP'] * 100
+        fig = px.bar(dat, x = 'strike', y = 'Llhd Blw EP')
+    else:
+        dat['Llhd Abv EP'] = dat['Llhd Abv EP'] * 100
+        fig = px.bar(dat, x = 'strike', y = 'Llhd Abv EP')
+    # fig.add_hline(y = current_price, line_color = 'firebrick')
+    fig.update_layout(xaxis_tickprefix = '$',
+                      yaxis_ticksuffix = '%')
+    return(fig)
+
+
 def main() -> None:
     
     st.sidebar.subheader('Evaluate What Stock Options?')
@@ -189,33 +225,44 @@ def main() -> None:
         options = ex_date
     )
     
-    current_price = get_hist_data(ticker, datetime.utcnow().date().isoformat())
+    current_date = get_latest_day(STOCK)
+    current_price = get_hist_data(ticker, current_date)
     price = round(current_price['Close'].item(), 2)
     
     st.header(f'Options Evaluations for {STOCK}')
     st.text(f'Option Expiration Date of {options_selection}')
     st.text(f'Current stock price: ${price}')
     
-    puts, calls, final_prices, hist_price = get_simulation(ticker, options_selection)
+    puts, calls, final_prices, hist_price = get_simulation(ticker, options_selection, STOCK)
     
-    put_tab, call_tab, price_tab = st.tabs([f'{STOCK} Puts', 
-                                            f'{STOCK} Calls', 
-                                            f'Simulated {STOCK} Prices'])
+    put_tab, call_tab, price_tab, hist_tab = st.tabs([f'{STOCK} Puts', 
+                                                      f'{STOCK} Calls', 
+                                                      f'Simulated {STOCK} Prices',
+                                                      f'Historical {STOCK} Prices'])
     
     with put_tab:
         st.subheader("Put Options Data")
         
         st.dataframe(puts)
+        
+        bar = strike_to_effective_plot(puts, price)
+        st.plotly_chart(bar)
+        
+        prob_bar = effective_to_prob(puts, price, True)
+        st.plotly_chart(prob_bar)
     
     with call_tab:
         st.subheader("Call Options Data")
         
         st.dataframe(calls)
         
-    with price_tab:
-        price_line = price_chart(hist_price, STOCK)
-        st.plotly_chart(price_line, use_container_width = True)
+        bar = strike_to_effective_plot(calls, price)
+        st.plotly_chart(bar)
         
+        prob_bar = effective_to_prob(calls, price, False)
+        st.plotly_chart(prob_bar)
+        
+    with price_tab:
         final_prices = pd.DataFrame({"final_price": final_prices})
         
         box = box_final_prices(final_prices, price)
@@ -223,6 +270,10 @@ def main() -> None:
         
         hist = hist_final_prices(final_prices, price)
         st.plotly_chart(hist, use_container_width = True)
+    
+    with hist_tab:
+        price_line = price_chart(hist_price, STOCK)
+        st.plotly_chart(price_line, use_container_width = True)
     
 if __name__ == "__main__":
     st.set_page_config(
