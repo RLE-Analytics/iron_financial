@@ -14,8 +14,8 @@ def get_ticker(STOCK):
     stock = yf.Ticker(STOCK)
     return(stock)
 
-def get_hist_data(stock, start = '2000-01-01'):
-    hist_price = stock.history(start = start)
+def get_hist_data(stock, start = '2000-01-01', end = datetime.today().date().isoformat()):
+    hist_price = stock.history(start = start, end = end)
     hist_price['Date'] = hist_price.index
     hist_price['perc_change'] = ((hist_price['Close'] - hist_price['Open']) / 
                                     hist_price['Open'])
@@ -47,7 +47,7 @@ def get_simulation(stock,
     start = today - timedelta(days = num_trading_days)
 
     start = start.isoformat()
-    start_date = get_latest_day(symbol)
+    start_date = get_latest_day(symbol, datetime.now() - timedelta(days = 1))
     
     hist_price = get_hist_data(stock)
     
@@ -80,7 +80,7 @@ def get_simulation(stock,
                                      )).reshape(num_trading_days, 
                                                 num_samples)
 
-    start_price = hist_price.loc[hist_price['Date'] == start_date, 'Close']
+    start_price = hist_price.loc[hist_price['Date'] == start_date.isoformat(), 'Close']
 
     sample_values[0] = start_price
 
@@ -176,21 +176,32 @@ def hist_final_prices(final_prices, current_price):
     fig.update_layout(xaxis_tickprefix = '$')
     return(fig)
 
-def get_latest_day(stock, current_date = datetime.utcnow().date() - timedelta(1)):
+def get_latest_day(stock, current_date = datetime.now()):
     if ('-USD' in stock or 
-            (current_date.weekday() >= 0 and 
-                current_date.weekday() <= 4)):
-        return(current_date.isoformat())
+            (current_date.date().weekday() >= 1 and 
+                current_date.date().weekday() <= 4)):
+        current_date = current_date.date()
     else:
-        if current_date.weekday() == 5:
-            current_date = current_date - timedelta(days = 1)
+        if current_date.date().weekday() == 5:
+            current_date = current_date.date() - timedelta(days = 1)
+        elif current_date.date().weekday() == 6: 
+            current_date = current_date.date() - timedelta(days = 2)
         else: 
-            current_date = current_date - timedelta(days = 2)
+            if current_date.hour + (current_date.minute / 60) < 9.5:
+                current_date = current_date.date() - timedelta(days = 3)
+            else:
+                current_date = current_date.date()
     
-    return(current_date.isoformat())
+    return(current_date)
 
 def strike_to_effective_plot(dat, current_price):
-    fig = px.bar(dat, x = 'strike', y = 'Effective Price')
+    dat['Strike Price'] = dat['strike']
+    plot_dat = dat.melt(var_name = "type", 
+                        value_name = "price",
+                        id_vars = ["Expiration Date", "Strike Price"],
+                        value_vars = ["strike", "ask"])
+    
+    fig = px.bar(plot_dat, x = 'Strike Price', y = 'price', color = 'type')
     fig.add_hline(y = current_price, line_color = 'firebrick')
     fig.update_layout(xaxis_tickprefix = '$',
                       yaxis_tickprefix = '$')
@@ -226,7 +237,7 @@ def main() -> None:
     )
     
     current_date = get_latest_day(STOCK)
-    current_price = get_hist_data(ticker, current_date)
+    current_price = get_hist_data(ticker, current_date.isoformat(), (current_date + timedelta(days = 1)).isoformat())
     price = round(current_price['Close'].item(), 2)
     
     st.header(f'Options Evaluations for {STOCK}')
