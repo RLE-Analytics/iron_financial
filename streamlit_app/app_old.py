@@ -1,7 +1,7 @@
 # GET LIBRARIES
 import streamlit as st
 import math
-import requests
+import yfinance as yf
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
@@ -10,90 +10,21 @@ from scipy.stats import genextreme
 from random import choices
 import plotly.express as px
 
-def get_token():
-    config = pd.read_csv('sandbox.config')
-    token = config.prod_token[0]
-    
-    return(token)
+def get_ticker(STOCK):
+    stock = yf.Ticker(STOCK)
+    return(stock)
 
-def get_hist_data(symbol, 
-                  token,
-                  start = '2000-01-01', 
-                  end = datetime.today().date().isoformat(),
-                  endpoint = 'https://api.tradier.com',
-                  path = '/v1/markets/history'):
-
-    response = requests.get(f'{endpoint}{path}',
-        params = {'symbol':f'{symbol}', 
-                  'interval': 'daily', 
-                  'start': '2000-01-01', 
-                  'end': f'{datetime.today().date().isoformat()}'},
-        headers = {'Authorization': f'Bearer {token}', 
-                   'Accept': 'application/json'})
-    json_response = response.json()
-    
-    hist_price = pd.json_normalize(json_response['history']['day'])
-    hist_price = hist_price.rename(({'date': 'Date',
-                                     'open': 'Open',
-                                     'close': 'Close'}),
-                                    axis = 'columns')
+def get_hist_data(stock, start = '2000-01-01', end = datetime.today().date().isoformat()):
+    hist_price = stock.history(start = start, end = end)
+    hist_price['Date'] = hist_price.index
     hist_price['perc_change'] = ((hist_price['Close'] - hist_price['Open']) / 
                                     hist_price['Open'])
                                     
     return(hist_price)
 
-def get_option_dates(symbol,
-                     token,
-                     endpoint = 'https://api.tradier.com',
-                     path = '/v1/markets/options/expirations'):
-    response = requests.get(f'{endpoint}{path}',
-        params = {'symbol': f'{symbol}', 
-                  'includeAllRoots': 'true'},
-        headers = {'Authorization': f'Bearer {token}', 
-                   'Accept': 'application/json'})
-    
-    json_response = response.json()
-    dates = json_response['expirations']['date']
-    
-    return(dates)
-
-def get_option_chain(symbol, 
-                     token, 
-                     option_date,
-                     endpoint = 'https://api.tradier.com',
-                     path = '/v1/markets/options/chains'):
-    
-    response = requests.get(f'{endpoint}{path}',
-        params = {'symbol': f'{symbol}', 
-                  'expiration': f'{option_date}', 
-                  'greeks': 'true'},
-        headers = {'Authorization': f'Bearer {token}', 
-                   'Accept': 'application/json'})
-    json_response = response.json()
-    
-    chain = pd.json_normalize(json_response['options']['option'])
-    
-    return(chain)
-
-def get_current_price(symbol, 
-                      token,
-                      endpoint = 'https://api.tradier.com',
-                      path = '/v1/markets/quotes'):
-
-    response = requests.get(f'{endpoint}{path}',
-        params = {'symbols': f'{symbol}', 
-                  'greeks': 'false'},
-        headers = {'Authorization': f'Bearer {token}', 
-                   'Accept': 'application/json'})
-    
-    json_response = response.json()
-    price = json_response['quotes']['quote']['last']
-    
-    return(price)
-
-def get_simulation(symbol, 
-                   token,
+def get_simulation(stock, 
                    option_date,
+                   symbol,
                    num_samples = 10000,
                    sample_size = 20000, 
                    upper_scale = 0.60, 
@@ -102,7 +33,7 @@ def get_simulation(symbol,
                    lower_shape = -0.1,
                    today = datetime.utcnow().date()):
     
-    opt_chain = get_option_chain(symbol, token, option_date)
+    opt_chain = stock.option_chain(option_date)
 
     date = {"Date": pd.date_range(datetime.today().date(), option_date)}
 
@@ -118,7 +49,7 @@ def get_simulation(symbol,
     start = start.isoformat()
     start_date = get_latest_day(symbol, datetime.now() - timedelta(days = 1))
     
-    hist_price = get_hist_data(symbol, token)
+    hist_price = get_hist_data(stock)
     
     perc_pos = (
         sum(hist_price.loc[hist_price['Date'] > start, 'perc_change'] > 0) / 
@@ -149,7 +80,7 @@ def get_simulation(symbol,
                                      )).reshape(num_trading_days, 
                                                 num_samples)
 
-    start_price = get_current_price(symbol, token)
+    start_price = hist_price.loc[hist_price['Date'] == start_date.isoformat(), 'Close']
 
     sample_values[0] = start_price
 
@@ -157,38 +88,58 @@ def get_simulation(symbol,
 
     final_prices = price_paths[num_trading_days - 1]
     
-    puts = opt_chain.loc[opt_chain['option_type'] == 'put']
+    puts = opt_chain.puts
+    puts['expiration_date'] = option_date
     puts['strike_minus_last'] = puts['strike'] - puts['ask']
 
-    for strp in puts.strike:
-        puts.loc[puts['strike'] == strp, 'likelihood_below'] = (
-            sum(final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_last'].item()) / num_samples)
-        
-        puts.loc[puts['strike'] == strp, 'likelihood_below_strike'] = (
+    for strp in puts.strike_minus_last:
+        puts.loc[puts['strike_minus_last'] == strp, 'likelihood_below'] = (
             sum(final_prices < strp) / num_samples)
     
-    calls = opt_chain.loc[opt_chain['option_type'] == 'call']
+    calls = opt_chain.calls
+    calls['expiration_date'] = option_date
     calls['strike_plus_last'] = calls['strike'] + calls['ask']
 
-    for strp in calls.strike:
-        calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
-            sum(final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_last'].item()) / num_samples)
-            
-        calls.loc[calls['strike'] == strp, 'likelihood_above_strike'] = (
+    for strp in calls.strike_plus_last:
+        calls.loc[calls['strike_plus_last'] == strp, 'likelihood_above'] = (
             sum(final_prices > strp) / num_samples)
-
-    puts = puts.rename(({'strike_minus_last': 'Effective Price',
-                         'last': 'Last Price',
+    
+    puts = puts[['expiration_date', 'strike', 'strike_minus_last', 
+                 'likelihood_below', 'lastPrice',
+                 'bid', 'ask', 'change', 'percentChange', 'volume', 
+                 'openInterest', 'impliedVolatility', 'inTheMoney', 
+                 'contractSize', 'currency', 'contractSymbol', 'lastTradeDate']]
+    
+    puts = puts.rename(({'contractSymbol': 'Contract Symbol',
+                         'lastTradeDate': 'Last Trade Date',
+                         'strike_minus_last': 'Effective Price',
+                         'lastPrice': 'Last Price',
+                         'percentChange': 'Percent Change',
+                         'openInterest': 'Open Interest',
+                         'impliedVolatility': 'Implied Volatility',
+                         'inTheMoney': 'In the Money?',
+                         'contractSize': 'Contract Size',
                          'expiration_date': 'Expiration Date',
-                         'likelihood_below': 'Llhd Blw EP',
-                         'likelihood_below_strike': 'Llhd Blw Stk'}),
+                         'likelihood_below': 'Llhd Blw EP'}),
                         axis = 'columns')
-
-    calls = calls.rename(({'strike_plus_last': 'Effective Price',
-                           'last': 'Last Price',
-                           'expiration_date': 'Expiration Date',
-                           'likelihood_above': 'Llhd Abv EP',
-                           'likelihood_above_strike': 'Llhd Abv Stk'}),
+    
+    calls = calls[['expiration_date', 'strike', 'strike_plus_last', 
+                   'likelihood_above', 'lastPrice',
+                   'bid', 'ask', 'change', 'percentChange', 'volume', 
+                   'openInterest', 'impliedVolatility', 'inTheMoney', 
+                   'contractSize', 'currency', 'contractSymbol', 'lastTradeDate']]
+                        
+    calls = calls.rename(({'contractSymbol': 'Contract Symbol',
+                         'lastTradeDate': 'Last Trade Date',
+                         'strike_plus_last': 'Effective Price',
+                         'lastPrice': 'Last Price',
+                         'percentChange': 'Percent Change',
+                         'openInterest': 'Open Interest',
+                         'impliedVolatility': 'Implied Volatility',
+                         'inTheMoney': 'In the Money?',
+                         'contractSize': 'Contract Size',
+                         'expiration_date': 'Expiration Date',
+                         'likelihood_above': 'Llhd Abv EP'}),
                         axis = 'columns')
     
     return(puts, calls, final_prices, hist_price)
@@ -243,10 +194,7 @@ def get_latest_day(stock, current_date = datetime.now()):
     
     return(current_date)
 
-def strike_to_effective_plot(dat, current_price, puts = True):
-    if puts:
-        dat['ask'] = dat['ask'] * -1
-    
+def strike_to_effective_plot(dat, current_price):
     dat['Strike Price'] = dat['strike']
     plot_dat = dat.melt(var_name = "type", 
                         value_name = "price",
@@ -267,19 +215,7 @@ def effective_to_prob(dat, current_price, puts):
     else:
         dat['Llhd Abv EP'] = dat['Llhd Abv EP'] * 100
         fig = px.bar(dat, x = 'strike', y = 'Llhd Abv EP')
-    fig.add_vline(x = current_price, line_color = 'firebrick')
-    fig.update_layout(xaxis_tickprefix = '$',
-                      yaxis_ticksuffix = '%')
-    return(fig)
-
-def strike_to_prob(dat, current_price, puts):
-    if puts:
-        dat['Llhd Blw Stk'] = dat['Llhd Blw Stk'] * 100
-        fig = px.bar(dat, x = 'strike', y = 'Llhd Blw Stk')
-    else:
-        dat['Llhd Abv Stk'] = dat['Llhd Abv Stk'] * 100
-        fig = px.bar(dat, x = 'strike', y = 'Llhd Abv Stk')
-    fig.add_vline(x = current_price, line_color = 'firebrick')
+    # fig.add_hline(y = current_price, line_color = 'firebrick')
     fig.update_layout(xaxis_tickprefix = '$',
                       yaxis_ticksuffix = '%')
     return(fig)
@@ -289,26 +225,26 @@ def main() -> None:
     
     st.sidebar.subheader('Evaluate What Stock Options?')
     
-    STOCK = st.sidebar.text_input('Stock:', 'AAPL')
+    STOCK = st.sidebar.text_input('Stock:', 'CMCSA')
     
     st.sidebar.subheader('What Option Expiration Date?')
     
-    token = get_token()
-    ex_date = get_option_dates(STOCK, token)
+    ticker = get_ticker(STOCK)
+    ex_date = list(ticker.options)
     options_selection = st.sidebar.selectbox(
         "Select Expiration Date to View", 
         options = ex_date
     )
     
-    price = get_current_price(STOCK, token)
+    current_date = get_latest_day(STOCK)
+    current_price = get_hist_data(ticker, current_date.isoformat(), (current_date + timedelta(days = 1)).isoformat())
+    price = round(current_price['Close'].item(), 2)
     
     st.header(f'Options Evaluations for {STOCK}')
     st.text(f'Option Expiration Date of {options_selection}')
     st.text(f'Current stock price: ${price}')
     
-    puts, calls, final_prices, hist_price = get_simulation(STOCK, 
-                                                           token,
-                                                           options_selection)
+    puts, calls, final_prices, hist_price = get_simulation(ticker, options_selection, STOCK)
     
     put_tab, call_tab, price_tab, hist_tab = st.tabs([f'{STOCK} Puts', 
                                                       f'{STOCK} Calls', 
@@ -320,28 +256,22 @@ def main() -> None:
         
         st.dataframe(puts)
         
-        bar = strike_to_effective_plot(puts, price, True)
+        bar = strike_to_effective_plot(puts, price)
         st.plotly_chart(bar)
         
         prob_bar = effective_to_prob(puts, price, True)
         st.plotly_chart(prob_bar)
-        
-        strike_bar = strike_to_prob(calls, price, True)
-        st.plotly_chart(strike_bar)
     
     with call_tab:
         st.subheader("Call Options Data")
         
         st.dataframe(calls)
         
-        bar = strike_to_effective_plot(calls, price, False)
+        bar = strike_to_effective_plot(calls, price)
         st.plotly_chart(bar)
         
         prob_bar = effective_to_prob(calls, price, False)
         st.plotly_chart(prob_bar)
-        
-        strike_bar = strike_to_prob(calls, price, False)
-        st.plotly_chart(strike_bar)
         
     with price_tab:
         final_prices = pd.DataFrame({"final_price": final_prices})
