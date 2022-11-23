@@ -11,8 +11,7 @@ from random import choices
 import plotly.express as px
 
 def get_token():
-    config = pd.read_csv('streamlit_app/sandbox.config')
-    token = config.prod_token[0]
+    token = st.secrets.tradier['prod_token']
     
     return(token)
 
