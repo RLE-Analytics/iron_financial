@@ -164,7 +164,7 @@ def get_simulation(symbol,
         puts.loc[puts['strike'] == strp, 'likelihood_below'] = (
             sum(final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_last'].item()) / num_samples)
         
-        puts.loc[puts['strike'] == strp, 'likelihood_below_strike'] = (
+        puts.loc[puts['strike'] == strp, 'likelihood_strike'] = (
             sum(final_prices < strp) / num_samples)
     
     calls = opt_chain.loc[opt_chain['option_type'] == 'call']
@@ -174,21 +174,21 @@ def get_simulation(symbol,
         calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
             sum(final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_last'].item()) / num_samples)
             
-        calls.loc[calls['strike'] == strp, 'likelihood_above_strike'] = (
+        calls.loc[calls['strike'] == strp, 'likelihood_strike'] = (
             sum(final_prices > strp) / num_samples)
 
     puts = puts.rename(({'strike_minus_last': 'Effective Price',
                          'last': 'Last Price',
                          'expiration_date': 'Expiration Date',
                          'likelihood_below': 'Llhd Blw EP',
-                         'likelihood_below_strike': 'Llhd Blw Stk'}),
+                         'likelihood_strike': 'Llhd Blw Stk'}),
                         axis = 'columns')
 
     calls = calls.rename(({'strike_plus_last': 'Effective Price',
                            'last': 'Last Price',
                            'expiration_date': 'Expiration Date',
                            'likelihood_above': 'Llhd Abv EP',
-                           'likelihood_above_strike': 'Llhd Abv Stk'}),
+                           'likelihood_strike': 'Llhd Abv Stk'}),
                         axis = 'columns')
     
     return(puts, calls, final_prices, hist_price)
@@ -248,15 +248,16 @@ def strike_to_effective_plot(dat, current_price, puts = True):
         dat['ask'] = dat['ask'] * -1
     
     dat['Strike Price'] = dat['strike']
-    plot_dat = dat.melt(var_name = "type", 
-                        value_name = "price",
-                        id_vars = ["Expiration Date", "Strike Price"],
-                        value_vars = ["strike", "ask"])
     
-    fig = px.bar(plot_dat, x = 'Strike Price', y = 'price', color = 'type')
+    fig = px.line(dat, x = 'Strike Price', y = 'Effective Price')
+    fig = fig.add_bar(x = dat['Strike Price'],
+                      y = dat['Strike Price'])
+    fig = fig.add_bar(x = dat['Strike Price'],
+                      y = dat['ask'])
     fig.add_hline(y = current_price, line_color = 'firebrick')
     fig.update_layout(xaxis_tickprefix = '$',
-                      yaxis_tickprefix = '$')
+                      yaxis_tickprefix = '$',
+                      showlegend = False)
     return(fig)
     
 
@@ -274,11 +275,13 @@ def effective_to_prob(dat, current_price, puts):
 
 def strike_to_prob(dat, current_price, puts):
     if puts:
-        dat['Llhd Blw Stk'] = dat['Llhd Blw Stk'] * 100
-        fig = px.bar(dat, x = 'strike', y = 'Llhd Blw Stk')
+        plot_dat = dat[['strike', 'Llhd Blw Stk']]
+        plot_dat['Llhd Blw Stk'] = plot_dat['Llhd Blw Stk'] * 100
+        fig = px.bar(plot_dat, x = 'strike', y = 'Llhd Blw Stk')
     else:
-        dat['Llhd Abv Stk'] = dat['Llhd Abv Stk'] * 100
-        fig = px.bar(dat, x = 'strike', y = 'Llhd Abv Stk')
+        plot_dat = dat[['strike', 'Llhd Abv Stk']]
+        plot_dat['Llhd Abv Stk'] = plot_dat['Llhd Abv Stk'] * 100
+        fig = px.bar(plot_dat, x = 'strike', y = 'Llhd Abv Stk')
     fig.add_vline(x = current_price, line_color = 'firebrick')
     fig.update_layout(xaxis_tickprefix = '$',
                       yaxis_ticksuffix = '%')
@@ -326,7 +329,7 @@ def main() -> None:
         prob_bar = effective_to_prob(puts, price, True)
         st.plotly_chart(prob_bar)
         
-        strike_bar = strike_to_prob(calls, price, True)
+        strike_bar = strike_to_prob(puts, price, True)
         st.plotly_chart(strike_bar)
     
     with call_tab:
