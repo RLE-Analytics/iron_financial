@@ -29,7 +29,10 @@ def get_hist_data(symbol,
         headers = {'Authorization': f'Bearer {token}',
                    'Accept': 'application/json'})
     json_response = response.json()
-
+    
+    if json_response['history'] == None:
+        return(-1)
+    
     hist_price = pd.json_normalize(json_response['history']['day'])
     hist_price = hist_price.rename(({'date': 'Date',
                                      'open': 'Open',
@@ -83,6 +86,9 @@ def get_simulation(symbol,
     start = start.isoformat()
 
     hist_price = get_hist_data(symbol, token)
+    
+    if type(hist_price) is int:
+        return(-1, -1, -1)
 
     perc_pos = (
         sum(hist_price.loc[hist_price['Date'] > start, 'perc_change'] > 0) /
@@ -171,7 +177,7 @@ def get_date(num_days,
     
     sim_end_date = dates['Date'].iloc[num_days]
     
-    return(sim_end_date.iso_format())
+    return(sim_end_date.isoformat())
 
 def create_data(days = [5, 10, 15, 20, 30, 60, 90]):
 
@@ -186,6 +192,9 @@ def create_data(days = [5, 10, 15, 20, 30, 60, 90]):
         for symbol in stock_table['symbol']:
 
             prob_below_current, quantile, current_price = get_simulation(symbol, token, end_date)
+            
+            if prob_below_current == -1:
+                continue
 
             tmp = pd.DataFrame({'symbol': symbol,
                                 'sim_length': num_days,
