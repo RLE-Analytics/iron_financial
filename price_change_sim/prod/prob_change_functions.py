@@ -166,7 +166,7 @@ def post_to_xano(dat,
 def get_date(num_days,
              today = datetime.today().date(),
              max_days = 90):
-    finish_date = today + timedelta(days = max_days + 30)
+    finish_date = today + timedelta(days = max_days * 3)
     date = {"Date": pd.date_range(today, finish_date)}
 
     dates = pd.DataFrame(data = date)
