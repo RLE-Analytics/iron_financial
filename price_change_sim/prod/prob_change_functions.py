@@ -2,44 +2,25 @@
 
 import pandas as pd
 import math
+import yfinance as yf
 import requests
 import numpy as np
 from datetime import datetime, timedelta
 from scipy.stats import genextreme
 from random import choices
 
-def get_token(path_to_config = './'):
-    config = pd.read_csv(f'{path_to_config}sandbox.config')
-    token = config['prod_token'].iloc[0]
-
-    return(token)
-
 def get_hist_data(symbol,
-                  token,
-                  start = '2000-01-01',
+                  start = datetime(year = 2000, month = 1, day = 1).isoformat(),
                   end = datetime.today().date().isoformat(),
                   endpoint = 'https://api.tradier.com',
                   path = '/v1/markets/history'):
 
-    response = requests.get(f'{endpoint}{path}',
-        params = {'symbol':f'{symbol}',
-                  'interval': 'daily',
-                  'start': '2000-01-01',
-                  'end': f'{datetime.today().date().isoformat()}'},
-        headers = {'Authorization': f'Bearer {token}',
-                   'Accept': 'application/json'})
-    json_response = response.json()
-    
-    if json_response['history'] == None:
-        return(-1)
-    
-    hist_price = pd.json_normalize(json_response['history']['day'])
-    hist_price = hist_price.rename(({'date': 'Date',
-                                     'open': 'Open',
-                                     'close': 'Close'}),
-                                    axis = 'columns')
-    hist_price['Open'] = hist_price['Open'].astype('float64')
-    hist_price['Close'] = hist_price['Close'].astype('float64')
+    hist_price = yf.download(symbol, period = "max")
+    hist_price['Date'] = hist_price.index
+    hist_price.reset_index(drop = True, inplace = True)
+    hist_price = hist_price.loc[(hist_price['Date'] >= start) & 
+                                (hist_price['Date'] < end)]
+    hist_price['symbol'] = symbol
     hist_price['perc_change'] = ((hist_price['Close'] - hist_price['Open']) /
                                     hist_price['Open'])
 
@@ -63,15 +44,17 @@ def get_current_price(symbol,
     return(price)
 
 def get_simulation(symbol,
-                   token,
                    finish_date,
+                   hist_price,
                    num_samples = 10000,
                    sample_size = 20000,
                    upper_scale = 0.60,
                    upper_shape = -0.09,
                    lower_scale = 0.65,
                    lower_shape = -0.1,
-                   today = datetime.today().date()):
+                   today = datetime.today().date(),
+                   max_range = 0.20,
+                   lookback = 2.5):
 
     date = {"Date": pd.date_range(today, finish_date)}
 
@@ -80,22 +63,23 @@ def get_simulation(symbol,
     dates = dates.loc[dates['wday'] != 5]
     dates = dates.loc[dates['wday'] != 6]
 
-    num_trading_days = dates.shape[0]
+    num_trading_days = int(round(dates.shape[0] * lookback, 0))
 
     start = today - timedelta(days = num_trading_days)
     start = start.isoformat()
-
-    hist_price = get_hist_data(symbol, token)
     
     if type(hist_price) is int:
         return(-1, -1, -1)
 
-    perc_pos = (
+    perc_pos_ = (
         sum(hist_price.loc[hist_price['Date'] > start, 'perc_change'] > 0) /
         len(hist_price.loc[hist_price['Date'] > start, 'perc_change'])
     )
-
-    perc_neg = 1 - perc_pos
+    
+    perc_neg_ = 1 - perc_pos_
+    
+    perc_pos = 0.5 + ((max_range / 2) * perc_pos_)
+    perc_neg = 0.5 - ((max_range / 2) * perc_neg_)
 
     avg = np.mean(hist_price['perc_change'])
     std = np.std(hist_price['perc_change'])
@@ -120,7 +104,7 @@ def get_simulation(symbol,
                                      )).reshape(num_trading_days,
                                                 num_samples)
 
-    start_price = get_current_price(symbol, token)
+    start_price = hist_price['Close'].iloc[-1]
 
     sample_values[0] = start_price
 
@@ -159,7 +143,8 @@ def post_to_xano(dat,
                                            'percentile_75': dat['percentile_75'].iloc[record],
                                            'percentile_90': dat['percentile_90'].iloc[record],
                                            'percentile_95': dat['percentile_95'].iloc[record],
-                                           'max_sim_price': dat['max_sim_price'].iloc[record]})
+                                           'max_sim_price': dat['max_sim_price'].iloc[record],
+                                           'model_version': dat['model_version'].iloc[record]})
 
     return(0)
 
@@ -179,19 +164,22 @@ def get_date(num_days,
     
     return(sim_end_date.isoformat())
 
-def create_data(days = [5, 10, 15, 20, 30, 60, 90]):
+def create_data(days = [5, 10, 15, 20, 30, 60, 90],
+                model_version = '0.0.2'):
 
-    token = get_token()
     stock_table = get_stock_table()
 
     prob_change = pd.DataFrame()
 
-    for num_days in days:
-        end_date = get_date(num_days)
-
-        for symbol in stock_table['symbol']:
-
-            prob_below_current, quantile, current_price = get_simulation(symbol, token, end_date)
+    for symbol in stock_table['symbol']:
+        
+        hist_price = get_hist_data(symbol)
+        
+        for num_days in days:
+            end_date = get_date(num_days)
+            prob_below_current, quantile, current_price = get_simulation(symbol, 
+                                                                         end_date,
+                                                                         hist_price)
             
             if prob_below_current == -1:
                 continue
@@ -209,7 +197,8 @@ def create_data(days = [5, 10, 15, 20, 30, 60, 90]):
                                 'percentile_75': quantile[5],
                                 'percentile_90': quantile[6],
                                 'percentile_95': quantile[7],
-                                'max_sim_price': quantile[8]},
+                                'max_sim_price': quantile[8],
+                                'model_version': model_version},
                               index = [0])
 
             prob_change = pd.concat([prob_change, tmp], axis = 0, ignore_index = True)
