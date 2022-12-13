@@ -53,8 +53,8 @@ def get_simulation(symbol,
                    lower_scale = 0.65,
                    lower_shape = -0.1,
                    today = datetime.today().date(),
-                   max_range = 0.20,
-                   lookback = 2.5):
+                   max_range = 0.30,
+                   lookback = 3):
 
     date = {"Date": pd.date_range(today, finish_date)}
 

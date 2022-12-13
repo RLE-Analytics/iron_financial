@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+from os import system, chdir
+
+chdir('/home/jacobrozran')
+
 from prob_change_functions import create_data, post_to_xano
-from os import system
 
 prob_change = create_data()
 
