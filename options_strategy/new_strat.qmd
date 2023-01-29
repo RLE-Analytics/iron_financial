@@ -10,10 +10,13 @@ pd.set_option('display.max_columns', None)
 
 
 tick = yf.Ticker('SPY')
-hist = tick.history(period = 'max', interval = '1wk')
+hist = tick.history(period = 'max', interval = '1d')
 hist['perc_change'] = (hist['Close'] - hist['Open']) / hist['Open']
 
 hist
+
+opts = tick.option_chain('2024-01-19')
+puts = opts.puts
 ```
 
 ```{r}
@@ -21,17 +24,18 @@ library(reticulate)
 library(dplyr)
 library(tibble)
 library(ggplot2)
+library(psych)
 
 options(scipen = 999)
 
 fsd <- sd(py$hist$perc_change)
 bd <- max(c(abs(min(py$hist$perc_change)), max(py$hist$perc_change)))
 
-sds <- tibble(nsd = -8:9) %>% 
+sds <- tibble(nsd = -11:13) %>% 
     mutate(sdlb = nsd * fsd,
            sdup = lead(sdlb, 1),
            nsd = ifelse(nsd >= 0, nsd + 1, nsd)) %>% 
-    filter(nsd <= 8)
+    filter(nsd <= 12)
 
 pnorm(bd / fsd)
 
@@ -75,19 +79,15 @@ sum(sum_dat$perc[sum_dat$nsd >= -1])
 405 * 100 * 0.02 / 100 # 2% INSURANCE ON THIS IS: 8.1; STRIKE PRICE OF $330
 
 # NOW LETS RUN THE SIMULATION
-weeks <- 52
+weeks <- 200
 samples <- 10000
-
-ggplot(bs_dat, aes(x = week, y = cum_change, group = sample)) + 
-    geom_line(alpha = 0.1)
-
-length(bs_dat$cum_change[bs_dat$cum_change <= 330 * 100]) / length(bs_dat$cum_change)
 
 options <- 1
 stocks <- 100
 buy_price <- 420 * 100
 opt_price <- 31.74 * stocks
 opt_strike <- 405 * stocks
+last_price <- tail(py$hist$Close, 1)
 
 bs_dat <- tibble(
     sample = rep(1:samples, each = weeks + 1),
@@ -96,26 +96,67 @@ bs_dat <- tibble(
                          size = samples * (weeks + 1), 
                          replace = TRUE)
 ) %>% 
-    mutate(perc_change = ifelse(week == 0, 405, perc_change)) %>% 
+    mutate(perc_change = ifelse(week == 0, last_price, perc_change)) %>% 
     group_by(sample) %>% 
     mutate(cum_change = cumprod(perc_change),
            cum_change = cum_change * 100)
 
-ins_dat <- bs_dat %>% 
-    filter(week == weeks) %>% 
-    mutate(cum_change = ifelse(cum_change >= opt_strike,
-                               cum_change - buy_price - opt_price,
-                               opt_strike - cum_change - opt_price))
+ggplot(bs_dat, aes(x = week, y = cum_change, group = sample)) + 
+    geom_line(alpha = 0.1) + 
+    geom_hline(yintercept = last_price * 100, color = "red")
 
+length(bs_dat$cum_change[bs_dat$cum_change <= 330 * 100]) / length(bs_dat$cum_change)
+
+ins_dat <- tibble()
+
+for (strike in unique(py$puts$strike)) {
+    opt_strike <- strike * 100
+    opt_price = (py$puts$bid[py$puts$strike == strike] + 
+                     ((py$puts$ask[py$puts$strike == strike] - 
+                           py$puts$bid[py$puts$strike == strike]) / 2)) * 100
+    buy_price = last_price * 100
+    
+    tmp <- bs_dat %>% 
+        filter(week == weeks) %>% 
+        mutate(strike = strike, 
+               stock_gains = cum_change - buy_price,
+               opt_gains = ifelse(cum_change > opt_strike,
+                                  0 - opt_price,
+                                  opt_strike - cum_change - opt_price),
+               total_gains = stock_gains + opt_gains)
+    
+    ins_dat <- bind_rows(ins_dat, tmp)
+}
 
 ggplot(bs_dat[bs_dat$week == weeks, ], 
-       aes(x = ((cum_change - buy_price) / buy_price))) +
+       aes(x = cum_change)) +
     geom_histogram() 
 
-ggplot(ins_dat, aes(x = cum_change / buy_price)) + 
-    geom_histogram()
+ggplot(ins_dat, aes(x = total_gains)) + 
+    geom_histogram() +
+    geom_vline(xintercept = 0, color = "red") +
+    facet_wrap(~ strike)
+
+ggplot(ins_dat, aes(x = total_gains, group = strike, y = strike)) + 
+    geom_boxplot() + 
+    geom_vline(xintercept = 0, color = "red")
 
 ins_dat <- ins_dat %>% 
     mutate(perc_change_fin = cum_change / buy_price)
 summary(ins_dat)
+
+tail(ins_dat)
+
+ins_dat %>% 
+    mutate(final_nw = total_gains + buy_price) %>% 
+    group_by(strike) %>% 
+    summarise(gmean = geometric.mean(final_nw)) %>% 
+    ggplot(aes(x = strike, y = gmean)) + 
+        geom_bar(stat = "identity") +
+        geom_hline(yintercept = buy_price)
+
+sum_dat
+strike
+py$puts
 ```
+
