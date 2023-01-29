@@ -673,9 +673,9 @@ mc_dat_wide <- mc_dat %>%
     mutate(rnum = row_number(), 
            sample = rep(1:num_sims, each = num_days),
            perc_change = sample(evd_dist$percent_change, 
-                         size = length(Date), 
-                         replace = TRUE) + 1,
-           perc_change = ifelse(rnum %% 20 == 1, 
+                                size = length(Date), 
+                                replace = TRUE) + 1,
+           perc_change = ifelse(rnum %% num_days == 1, 
                                 start_price, 
                                 perc_change)) %>% 
     select(Date, sample, perc_change) %>% 
@@ -717,7 +717,7 @@ price of `CMCSA`.
 #| out-width: "100%"
 #| fig-align: "center"
 
-hist <- ggplot(plot_dat[plot_dat$Date == as_date("2022-11-11"), ], aes(x = closing_price)) + 
+hist <- ggplot(plot_dat[plot_dat$Date == (max(plot_dat$Date) - 1), ], aes(x = closing_price)) + 
     geom_histogram(fill = "navy", color = "white") + 
     geom_vline(aes(xintercept = Close), color = "red") + 
     ggtitle("Histogram of 10,000 Alternative\nFutures final prices",
@@ -731,7 +731,7 @@ hist <- ggplot(plot_dat[plot_dat$Date == as_date("2022-11-11"), ], aes(x = closi
           axis.ticks = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"))
 
-boxp <- ggplot(plot_dat[plot_dat$Date == as_date("2022-11-11"), ], aes(x = closing_price)) + 
+boxp <- ggplot(plot_dat[plot_dat$Date == (max(plot_dat$Date) - 1), ], aes(x = closing_price)) + 
     geom_boxplot() + 
     geom_vline(aes(xintercept = Close), color = "red") + 
     ggtitle("Boxplot of 10,000 Alternative\nFutures final prices",

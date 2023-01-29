@@ -1,0 +1,121 @@
+---
+title: "insurance jawn"
+format: html
+---
+
+```{python}
+import yfinance as yf
+import pandas as pd
+pd.set_option('display.max_columns', None)
+
+
+tick = yf.Ticker('SPY')
+hist = tick.history(period = 'max', interval = '1wk')
+hist['perc_change'] = (hist['Close'] - hist['Open']) / hist['Open']
+
+hist
+```
+
+```{r}
+library(reticulate)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+
+options(scipen = 999)
+
+fsd <- sd(py$hist$perc_change)
+bd <- max(c(abs(min(py$hist$perc_change)), max(py$hist$perc_change)))
+
+sds <- tibble(nsd = -8:9) %>% 
+    mutate(sdlb = nsd * fsd,
+           sdup = lead(sdlb, 1),
+           nsd = ifelse(nsd >= 0, nsd + 1, nsd)) %>% 
+    filter(nsd <= 8)
+
+pnorm(bd / fsd)
+
+ggplot(py$hist, aes(x = perc_change)) + 
+    geom_histogram() + 
+    geom_vline(xintercept = sds$sdlb, color = "red")
+
+sum_dat <- tibble()
+
+for(isd in sds$nsd) {
+    tmp <- tibble(
+        nsd = isd,
+        count = length(py$hist$perc_change[
+            py$hist$perc_change >= sds$sdlb[sds$nsd == isd] &
+                py$hist$perc_change < sds$sdup[sds$nsd == isd]
+        ])
+    )
+    
+    sum_dat <- bind_rows(sum_dat, tmp)
+}
+
+sum_dat$perc <- sum_dat$count / sum(sum_dat$count)
+
+ggplot(sum_dat, aes(x = factor(nsd), y = perc)) +
+    geom_bar(stat = "identity") + 
+    geom_text(aes(label = round(perc * 100, 2)), 
+              vjust = 0)
+
+# 3 standard deviations is 99%
+
+sum(sum_dat$perc[sum_dat$nsd >= -2])
+sum(sum_dat$perc[sum_dat$nsd >= -1])
+
+# 98% of the TIME, THE PRICE SHOULD BE HIGHER THAN 
+405 * (1 - (2 * fsd)) #386.59
+365 * 0.02
+405 * 100 # COST OF 100 SHARES TODAY
+19.39 * 100 # COST OF INSURANCE ON THOSE 100 SHARES
+1939 / 40500 # 4.7%... TOO EXPENSIVE
+
+405 * 100 * 0.02 / 100 # 2% INSURANCE ON THIS IS: 8.1; STRIKE PRICE OF $330
+
+# NOW LETS RUN THE SIMULATION
+weeks <- 52
+samples <- 10000
+
+ggplot(bs_dat, aes(x = week, y = cum_change, group = sample)) + 
+    geom_line(alpha = 0.1)
+
+length(bs_dat$cum_change[bs_dat$cum_change <= 330 * 100]) / length(bs_dat$cum_change)
+
+options <- 1
+stocks <- 100
+buy_price <- 420 * 100
+opt_price <- 31.74 * stocks
+opt_strike <- 405 * stocks
+
+bs_dat <- tibble(
+    sample = rep(1:samples, each = weeks + 1),
+    week = rep(0:weeks, samples),
+    perc_change = sample(py$hist$perc_change + 1, 
+                         size = samples * (weeks + 1), 
+                         replace = TRUE)
+) %>% 
+    mutate(perc_change = ifelse(week == 0, 405, perc_change)) %>% 
+    group_by(sample) %>% 
+    mutate(cum_change = cumprod(perc_change),
+           cum_change = cum_change * 100)
+
+ins_dat <- bs_dat %>% 
+    filter(week == weeks) %>% 
+    mutate(cum_change = ifelse(cum_change >= opt_strike,
+                               cum_change - buy_price - opt_price,
+                               opt_strike - cum_change - opt_price))
+
+
+ggplot(bs_dat[bs_dat$week == weeks, ], 
+       aes(x = ((cum_change - buy_price) / buy_price))) +
+    geom_histogram() 
+
+ggplot(ins_dat, aes(x = cum_change / buy_price)) + 
+    geom_histogram()
+
+ins_dat <- ins_dat %>% 
+    mutate(perc_change_fin = cum_change / buy_price)
+summary(ins_dat)
+```
