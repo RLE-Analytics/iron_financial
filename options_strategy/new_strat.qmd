@@ -9,7 +9,7 @@ import pandas as pd
 pd.set_option('display.max_columns', None)
 
 
-tick = yf.Ticker('SPY')
+tick = yf.Ticker('TLRY')
 hist = tick.history(period = 'max', interval = '1d')
 hist['perc_change'] = (hist['Close'] - hist['Open']) / hist['Open']
 
@@ -123,13 +123,14 @@ for (strike in unique(py$puts$strike)) {
                opt_gains = ifelse(cum_change > opt_strike,
                                   0 - opt_price,
                                   opt_strike - cum_change - opt_price),
+               opt_price = opt_price,
                total_gains = stock_gains + opt_gains)
     
     ins_dat <- bind_rows(ins_dat, tmp)
 }
 
 ggplot(bs_dat[bs_dat$week == weeks, ], 
-       aes(x = cum_change)) +
+       aes(x = (cum_change / buy_price))) +
     geom_histogram() 
 
 ggplot(ins_dat, aes(x = total_gains)) + 
@@ -148,15 +149,46 @@ summary(ins_dat)
 tail(ins_dat)
 
 ins_dat %>% 
-    mutate(final_nw = total_gains + buy_price) %>% 
+    mutate(final_tg = (total_gains + buy_price),
+           final_sg = (stock_gains + buy_price),
+           final_opt = (opt_gains + buy_price)) %>% 
     group_by(strike) %>% 
-    summarise(gmean = geometric.mean(final_nw)) %>% 
-    ggplot(aes(x = strike, y = gmean)) + 
+    summarise(gmean_tg = (prod(final_tg))^(1 / length(final_tg)),
+              gmean_sg = (prod(final_sg))^(1 / length(final_sg)),
+              gmean_opt = (prod(final_opt))^(1 / length(final_opt))) %>% 
+    ggplot(aes(x = strike, y = gmean_opt)) + 
         geom_bar(stat = "identity") +
         geom_hline(yintercept = buy_price)
+
+
+ggplot(ins_dat, aes(x = opt_gains)) +
+    geom_histogram() + 
+    facet_wrap(~ strike) + 
+    geom_vline(xintercept = 0)
+
+ins_dat %>% 
+    select(strike,
+           opt_gains) %>% 
+    group_by(strike) %>% 
+    summarise(ming = min(opt_gains),
+              fifth = quantile(opt_gains, 0.05),
+              first_q = quantile(opt_gains, 0.25),
+              medg = median(opt_gains),
+              mean_g = mean(opt_gains),
+              third_q = quantile(opt_gains, 0.75),
+              maxg = max(opt_gains))
 
 sum_dat
 strike
 py$puts
+
+bs_dat %>% 
+    filter(week == weeks) %>% 
+    mutate(final_value = cum_change - buy_price) %>% 
+    ggplot(aes(x = final_value)) + 
+        geom_histogram()
+
+summary(bs_dat[bs_dat$week == weeks, ])
 ```
+
 
