@@ -1,0 +1,112 @@
+---
+title: "PE Multipliers"
+format: html
+---
+
+```{python}
+import pandas as pd
+import yfinance as yf
+
+# Define the list of NYSE stock symbols
+symbols = pd.read_csv('https://datahub.io/core/nyse-other-listings/r/nyse-listed.csv')['ACT Symbol'].tolist()
+
+# Define a function to calculate the P/E multiplier for a given stock symbol
+def calculate_pe_ratio(symbol):
+    stock = yf.Ticker(symbol)
+    pe_ratio = stock.info['trailingPE']
+    return pe_ratio
+
+# Create an empty dataframe to store the P/E ratios for each stock
+pe_ratios = pd.DataFrame(columns=['Symbol', 'P/E Ratio'])
+
+# Loop through each stock symbol and calculate its P/E ratio
+for symbol in symbols:
+    pe_ratio = calculate_pe_ratio(symbol)
+    pe_ratios = pe_ratios.append({'Symbol': symbol, 'P/E Ratio': pe_ratio}, ignore_index=True)
+    print(symbol)
+
+# Save the P/E ratios to a CSV file
+pe_ratios.to_csv('nyse_pe_ratios.csv', index=False)
+
+```
+
+```{python}
+import pandas as pd
+from yahoo_fin import stock_info as si
+
+# Define the list of NASDAQ stock symbols
+symbols = si.tickers_nasdaq()
+
+# Define a function to calculate the P/E multiplier for a given stock symbol
+def calculate_pe_ratio(symbol):
+    pe_ratio = si.get_quote_table(symbol)['PE Ratio (TTM)']
+    return pe_ratio
+
+# Create an empty dataframe to store the P/E ratios for each stock
+pe_ratios = pd.DataFrame(columns=['Symbol', 'P/E Ratio'])
+
+# Loop through each stock symbol and calculate its P/E ratio
+for symbol in symbols:
+    try:
+        pe_ratio = calculate_pe_ratio(symbol)
+        pe_ratios = pe_ratios.append({'Symbol': symbol, 'P/E Ratio': pe_ratio}, ignore_index=True)
+        print(f"worked: {symbol}")
+    except:
+        print(f"failed: {symbol}")
+        continue
+
+# Save the P/E ratios to a CSV file
+pe_ratios.to_csv('nyse_pe_ratios.csv', index=False)
+
+```
+
+
+```{python}
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+import pandas as pd
+from yahoo_fin import stock_info as si
+import numpy as np
+
+# Define the list of NASDAQ stock symbols
+symbols = si.tickers_nasdaq()
+
+# Define a function to get the P/E ratio, EPS, and yesterday's closing price for a given stock symbol
+def get_stock_data(symbol):
+    quote_table = si.get_quote_table(symbol)
+    pe_ratio = quote_table['PE Ratio (TTM)']
+    eps = quote_table['EPS (TTM)']
+    prev_close = si.get_data(symbol).tail(1)['close'][0]
+    return pe_ratio, eps, prev_close
+
+# Create an empty dataframe to store the stock data for each stock
+stock_data = pd.DataFrame(columns=['Symbol', 'P/E Ratio', 'EPS', 'Prev Close'])
+
+# Loop through each stock symbol and get its P/E ratio, EPS, and yesterday's closing price
+for symbol in symbols:
+    try:
+        pe_ratio, eps, prev_close = get_stock_data(symbol)
+        
+        if np.isnan(pe_ratio):
+            continue
+        
+        stock_data = pd.concat([stock_data, 
+                                pd.DataFrame({'Symbol': symbol, 
+                                              'P/E Ratio': pe_ratio, 
+                                              'EPS': eps, 
+                                              'Prev Close': prev_close}, 
+                                             index = [0])], 
+                                ignore_index=True)
+        
+        print(f"worked: {symbol}")
+    
+    except:
+        print(f"failed: {symbol}")
+        continue
+    
+
+# Save the stock data to a CSV file
+stock_data.to_csv('nasdaq_stock_data.csv', index=False)
+
+```
+

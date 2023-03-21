@@ -28,10 +28,6 @@ h1,h2,h3,h4 {
 .container { width: 1000px; }
 h3 {
   background-color: #D4DAEC;
-  text-indent: 100px; 
-}
-h4 {
-  text-indent: 100px;
 }
 
 g-table-intro h4 {
@@ -55,6 +51,8 @@ library(tidyr)
 
 options(scipen = 999)
 
+sim_start_date <- Sys.Date() - days(31)
+
 # Get Stock Data
 get_dat <- function(symbol, freq_num = 1, freq = "d", period1 = 1410825600, 
                     period2 = as.numeric(format(as_datetime(Sys.time()), "%s"))) {
@@ -75,6 +73,36 @@ get_dat <- function(symbol, freq_num = 1, freq = "d", period1 = 1410825600,
     dat$symbol <- symbol
     
     return(dat)
+}
+
+get_evd <- function(dat, sim_start_date) {
+    upper_scale <- 0.60
+    lower_scale <- 0.65
+    upper_shape <- 0.09
+    lower_shape <- 0.1
+    sample_size <- 20000
+    
+    perc_pos <- sum(ifelse(!is.na(dat$percent_change[dat$Date < sim_start_date]) & 
+                               dat$percent_change[dat$Date < sim_start_date] >= 0, 
+                           TRUE, FALSE)) / 
+        length(dat$percent_change[dat$Date < sim_start_date])
+    perc_neg <- sum(ifelse(!is.na(dat$percent_change[dat$Date < sim_start_date]) & 
+                               dat$percent_change[dat$Date < sim_start_date] < 0, 
+                           TRUE, FALSE)) / 
+        length(dat$percent_change[dat$Date < sim_start_date])
+    avg <- mean(dat$percent_change[dat$Date < sim_start_date], na.rm = TRUE)
+    std <- sd(dat$percent_change[dat$Date < sim_start_date], na.rm = TRUE)
+    
+    evd_dist <- tibble(
+        percent_change = c(
+            rgev(sample_size * perc_pos, 
+                 loc = avg, 
+                 scale = upper_scale * std, 
+                 shape = upper_shape),
+            -1 * rgev(sample_size * perc_neg, 
+                      loc = avg, 
+                      scale = lower_scale * std, 
+                      shape = lower_shape)))
 }
 ```
 
@@ -170,29 +198,7 @@ Actual data are on the left, modeled data are on the right.
 #| out-width: "100%"
 #| fig-align: "center"
 
-upper_scale <- 0.60
-lower_scale <- 0.65
-upper_shape <- 0.09
-lower_shape <- 0.1
-sample_size <- 20000
-
-perc_pos <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change >= 0, 
-                       TRUE, FALSE)) / length(dat$percent_change)
-perc_neg <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change < 0, 
-                       TRUE, FALSE)) / length(dat$percent_change)
-avg <- mean(dat$percent_change, na.rm = TRUE)
-std <- sd(dat$percent_change, na.rm = TRUE)
-
-evd_dist <- tibble(
-    percent_change = c(
-        rgev(sample_size * perc_pos, 
-             loc = avg, 
-             scale = upper_scale * std, 
-             shape = upper_shape),
-        -1 * rgev(sample_size * perc_neg, 
-                  loc = avg, 
-                  scale = lower_scale * std, 
-                  shape = lower_shape)))
+evd_dist <- get_evd(dat, sim_start_date)
 
 act <- ggplot(dat, aes(x = percent_change)) + 
     geom_histogram(fill = "navy", color = "white") + 
@@ -282,10 +288,10 @@ actually happened.
 #| fig-align: "center"
 
 start_date <- dat %>% 
-    filter(Date == Sys.Date() - days(31)) %>% 
+    filter(Date == sim_start_date) %>% 
     pull(Date)
 start_price <- dat %>% 
-    filter(Date == Sys.Date() - days(31)) %>% 
+    filter(Date == sim_start_date) %>% 
     pull(Close)
 
 mc_dat <- tibble(Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
@@ -297,17 +303,19 @@ mc_dat <- tibble(Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
 
 plot_dat <- dat %>% 
     left_join(mc_dat, by = "Date") %>% 
-    filter(Date >= as_date("2022-09-01")) 
+    filter(Date >= Sys.Date() - months(4)) 
 
 plot_dat <- dat %>% 
     left_join(mc_dat, by = "Date") %>% 
-    filter(Date >= as_date("2022-09-01")) 
+    filter(Date >= Sys.Date() - months(4)) 
 
 ggplot(plot_dat, aes(x = Date)) +
     geom_line(aes(y = Close)) + 
     geom_line(aes(y = closing_price), color = "navy", alpha = 0.5) +
     ggtitle("Creating a Singular Alternative Future for the 'next' 30 days",
-            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+            subtitle = paste0("Simulation begins on ", 
+                              format(sim_start_date, "%m/%d"),
+                              "\nActual price is black; simulated price is navy")) + 
     scale_y_continuous(labels = dollar_format()) + 
     theme(panel.background = element_blank(),
           panel.grid.major.y = element_line(color = "light gray"),
@@ -360,13 +368,15 @@ mc_dat_final <- cprod %>%
 
 plot_dat <- dat %>% 
     left_join(mc_dat_final, by = "Date") %>% 
-    filter(Date >= as_date("2022-09-01")) 
+    filter(Date >= Sys.Date() - months(4)) 
 
 ggplot(plot_dat, aes(x = Date)) +
     geom_line(aes(y = closing_price, group = sample), color = "navy", alpha = 0.15) +
     geom_line(aes(y = Close)) + 
     ggtitle("Creating 10,000 Alternative Futures for the 'next' 30 days",
-            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+            subtitle = paste0("Simulation begins on ", 
+                              format(sim_start_date, "%m/%d"),
+                              "\nActual price is black; simulated price is navy")) + 
     scale_y_continuous(labels = dollar_format()) + 
     theme(panel.background = element_blank(),
           panel.grid.major.y = element_line(color = "light gray"),
@@ -504,29 +514,7 @@ Actual data are on the left, modeled data are on the right.
 #| out-width: "100%"
 #| fig-align: "center"
 
-upper_scale <- 0.60
-lower_scale <- 0.65
-upper_shape <- 0.09
-lower_shape <- 0.1
-sample_size <- 20000
-
-perc_pos <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change >= 0, 
-                       TRUE, FALSE)) / length(dat$percent_change)
-perc_neg <- sum(ifelse(!is.na(dat$percent_change) & dat$percent_change < 0, 
-                       TRUE, FALSE)) / length(dat$percent_change)
-avg <- mean(dat$percent_change, na.rm = TRUE)
-std <- sd(dat$percent_change, na.rm = TRUE)
-
-evd_dist <- tibble(
-    percent_change = c(
-        rgev(sample_size * perc_pos, 
-             loc = avg, 
-             scale = upper_scale * std, 
-             shape = upper_shape),
-        -1 * rgev(sample_size * perc_neg, 
-                  loc = avg, 
-                  scale = lower_scale * std, 
-                  shape = lower_shape)))
+evd_dist <- get_evd(dat, sim_start_date)
 
 act <- ggplot(dat, aes(x = percent_change)) + 
     geom_histogram(fill = "navy", color = "white") + 
@@ -635,13 +623,15 @@ mc_dat <- tibble(Date = seq.Date(start_date, Sys.Date() - days(1), by = "day"),
 
 plot_dat <- dat %>% 
     left_join(mc_dat, by = "Date") %>% 
-    filter(Date >= as_date("2022-09-01")) 
+    filter(Date >= Sys.Date() - months(4)) 
 
 ggplot(plot_dat, aes(x = Date)) +
     geom_line(aes(y = Close)) + 
     geom_line(aes(y = closing_price), color = "navy", alpha = 0.5) +
     ggtitle("Creating a Singular Alternative Future for the 'next' 30 days",
-            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+            subtitle = paste0("Simulation begins on ", 
+                              format(sim_start_date, "%m/%d"),
+                              "\nActual price is black; simulated price is navy")) + 
     scale_y_continuous(labels = dollar_format()) + 
     theme(panel.background = element_blank(),
           panel.grid.major.y = element_line(color = "light gray"),
@@ -697,7 +687,9 @@ ggplot(plot_dat, aes(x = Date)) +
     geom_line(aes(y = closing_price, group = sample), color = "navy", alpha = 0.15) +
     geom_line(aes(y = Close)) + 
     ggtitle("Creating 10,000 Alternative Futures for the 'next' 30 days",
-            subtitle = "Simulation begins on 10/15\nActual price is black; simulated price is navy") + 
+            subtitle = paste0("Simulation begins on ", 
+                              format(sim_start_date, "%m/%d"),
+                              "\nActual price is black; simulated price is navy")) + 
     scale_y_continuous(labels = dollar_format()) + 
     theme(panel.background = element_blank(),
           panel.grid.major.y = element_line(color = "light gray"),
