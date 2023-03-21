@@ -1,0 +1,11 @@
+---
+title: "PE Ratio Analysis"
+format: html
+---
+
+```{r}
+library(readr)
+
+dat <- read_csv("")
+```
+
