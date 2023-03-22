@@ -27,11 +27,12 @@ for ticker in tickers:
                         prices_df['close'].iloc[0]) / 
                         prices_df['close'].iloc[0])
 
+        qt = si.get_quote_table(ticker)
         # retrieve the current EPS
-        eps = si.get_earnings(ticker)['Earnings/Share'].iloc[-1]
+        eps = qt['EPS (TTM)']
 
         # retrieve the current P/E ratio
-        pe_ratio = si.get_quote_table(ticker)['PE Ratio (TTM)']
+        pe_ratio = qt['PE Ratio (TTM)']
 
         # retrieve the most recent closing price
         closing_price = prices_df['close'].iloc[-1]
