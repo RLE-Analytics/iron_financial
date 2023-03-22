@@ -5,7 +5,19 @@ format: html
 
 ```{r}
 library(readr)
+library(dplyr)
+library(ggplot2)
 
-dat <- read_csv("")
+options(scipen = 999)
+
+dat <- read_csv("nasdaq_stock_data.csv")
+
+dat %>% 
+    arrange(desc(`P/E Ratio`))
+
+dat %>% 
+    ggplot(aes(x = `P/E Ratio`)) +
+    geom_histogram() + 
+    scale_x_continuous(trans = "log10")
 ```
 

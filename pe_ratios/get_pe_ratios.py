@@ -1,45 +1,55 @@
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action = 'ignore', category = FutureWarning)
 import pandas as pd
 from yahoo_fin import stock_info as si
 import numpy as np
 
-# Define the list of NASDAQ stock symbols
-symbols = si.tickers_nasdaq()
+import pandas as pd
+from yahoo_fin import stock_info as si
 
-# Define a function to get the P/E ratio, EPS, and yesterday's closing price for a given stock symbol
-def get_stock_data(symbol):
-    quote_table = si.get_quote_table(symbol)
-    pe_ratio = quote_table['PE Ratio (TTM)']
-    eps = quote_table['EPS (TTM)']
-    prev_close = si.get_data(symbol).tail(1)['close'][0]
-    return pe_ratio, eps, prev_close
+# get the list of NASDAQ tickers
+tickers = si.tickers_nasdaq()
 
-# Create an empty dataframe to store the stock data for each stock
-stock_data = pd.DataFrame(columns=['Symbol', 'P/E Ratio', 'EPS', 'Prev Close'])
+# create an empty dataframe to store the results
+results_df = pd.DataFrame(columns=['Ticker', 
+                                   'Growth Rate', 
+                                   'EPS', 
+                                   'P/E Ratio', 
+                                   'Closing Price'])
 
-# Loop through each stock symbol and get its P/E ratio, EPS, and yesterday's closing price
-for symbol in symbols:
+# loop through each ticker and retrieve the relevant data
+for ticker in tickers:
     try:
-        pe_ratio, eps, prev_close = get_stock_data(symbol)
-        
-        if np.isnan(pe_ratio):
-            continue
-        
-        stock_data = pd.concat([stock_data, 
-                                pd.DataFrame({'Symbol': symbol, 
-                                              'P/E Ratio': pe_ratio, 
-                                              'EPS': eps, 
-                                              'Prev Close': prev_close}, 
-                                             index = [0])], 
-                                ignore_index=True)
-        
-        print(f"worked: {symbol}")
-    
-    except:
-        print(f"failed: {symbol}")
-        continue
-    
+        # retrieve the historical stock prices
+        prices_df = si.get_data(ticker, 
+                                start_date = '2022-03-22', 
+                                end_date = '2023-03-22')
 
-# Save the stock data to a CSV file
-stock_data.to_csv('nasdaq_stock_data.csv', index=False)
+        # calculate the growth rate for the last year
+        growth_rate = ((prices_df['close'].iloc[-1] - 
+                        prices_df['close'].iloc[0]) / 
+                        prices_df['close'].iloc[0])
+
+        # retrieve the current EPS
+        eps = si.get_earnings(ticker)['Earnings/Share'].iloc[-1]
+
+        # retrieve the current P/E ratio
+        pe_ratio = si.get_quote_table(ticker)['PE Ratio (TTM)']
+
+        # retrieve the most recent closing price
+        closing_price = prices_df['close'].iloc[-1]
+
+        # add the results to the dataframe
+        results_df = pd.concat([results_df, 
+                                pd.DataFrame({'Ticker': ticker, 
+                                              'Growth Rate': growth_rate, 
+                                              'EPS': eps, 
+                                              'P/E Ratio': pe_ratio, 
+                                              'Closing Price': closing_price}, 
+                                             index=[0])], 
+                                ignore_index = True)
+    except Exception as e:
+        print(f"Error retrieving data for {ticker}: {e}")
+
+# write the results to CSV
+results_df.to_csv('nasdaq_stock_data.csv', index = False)
