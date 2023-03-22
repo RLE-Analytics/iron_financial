@@ -51,7 +51,7 @@ library(tidyr)
 
 options(scipen = 999)
 
-sim_start_date <- Sys.Date() - days(31)
+sim_start_date <- floor_date(Sys.Date() - days(31), unit = "week", week_start = 1)
 
 # Get Stock Data
 get_dat <- function(symbol, freq_num = 1, freq = "d", period1 = 1410825600, 
