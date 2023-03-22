@@ -4,9 +4,6 @@ import pandas as pd
 from yahoo_fin import stock_info as si
 import numpy as np
 
-import pandas as pd
-from yahoo_fin import stock_info as si
-
 # get the list of NASDAQ tickers
 tickers = si.tickers_nasdaq()
 
