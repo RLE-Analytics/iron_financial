@@ -321,16 +321,21 @@ def main() -> None:
     with put_tab:
         st.subheader("Put Options Data")
         
-        st.dataframe(puts)
+        sell_tab, buy_tab = st.tabs([f'Sell {STOCK} Puts',
+                                     f'Buy {STOCK} Puts'])
         
-        bar = strike_to_effective_plot(puts, price, True)
-        st.plotly_chart(bar)
+        with sell_tab:
+            st.dataframe(puts)
         
-        prob_bar = effective_to_prob(puts, price, True)
-        st.plotly_chart(prob_bar)
-        
-        strike_bar = strike_to_prob(puts, price, True)
-        st.plotly_chart(strike_bar)
+        with call_tab:
+            bar = strike_to_effective_plot(puts, price, True)
+            st.plotly_chart(bar)
+            
+            prob_bar = effective_to_prob(puts, price, True)
+            st.plotly_chart(prob_bar)
+            
+            strike_bar = strike_to_prob(puts, price, True)
+            st.plotly_chart(strike_bar)
     
     with call_tab:
         st.subheader("Call Options Data")
