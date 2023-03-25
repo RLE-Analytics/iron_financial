@@ -326,11 +326,7 @@ def main() -> None:
         
         with sell_tab:
             
-            st.text(('If I sell a put for a strike of $4 (expires on 4/28) for ' + 
-                    '$0.02:\n\t- I make $2 if the stock stays above $4 (I want ' + '
-                    'that to happen)\n\t- I have to buy the stock if it goes ' + 
-                    'below $4 (I don\'t want that to happen)\n\t- I need to ' + 
-                    'have $400 ($4 * 100) collateral'))
+            st.text('If I sell a put for a strike of $4 (expires on 4/28) for $0.02:\n\t- I make $2 if the stock stays above $4 (I want that to happen)\n\t- I have to buy the stock if it goes below $4 (I don\'t want that to happen)\n\t- I need to have $400 ($4 * 100) collateral')
             
             st.dataframe(puts)
         
