@@ -327,7 +327,7 @@ def main() -> None:
         with sell_tab:
             st.dataframe(puts)
         
-        with call_tab:
+        with buy_tab:
             bar = strike_to_effective_plot(puts, price, True)
             st.plotly_chart(bar)
             
