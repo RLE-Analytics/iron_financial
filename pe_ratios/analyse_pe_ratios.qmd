@@ -13,7 +13,14 @@ options(scipen = 999)
 dat <- read_csv("nasdaq_stock_data.csv")
 
 dat %>% 
-    arrange(desc(`P/E Ratio`))
+    filter(`Closing Price` > 5) %>% 
+    arrange(`Closing Price`)
+
+dat %>% 
+    arrange(desc(`Growth Rate`))
+
+dat %>% 
+    arrange(`Closing Price`)
 
 dat %>% 
     ggplot(aes(x = `P/E Ratio`)) +

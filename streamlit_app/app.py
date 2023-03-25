@@ -119,10 +119,11 @@ def get_simulation(symbol,
     
     hist_price = get_hist_data(symbol, token)
     
-    perc_pos = (
-        sum(hist_price.loc[hist_price['Date'] > start, 'perc_change'] > 0) / 
-        len(hist_price.loc[hist_price['Date'] > start, 'perc_change'])
-    )
+    perc_pos = 0.5
+    # (
+    #     sum(hist_price.loc[hist_price['Date'] > start, 'perc_change'] > 0) / 
+    #     len(hist_price.loc[hist_price['Date'] > start, 'perc_change'])
+    # )
 
     perc_neg = 1 - perc_pos
 
