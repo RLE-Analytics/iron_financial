@@ -343,6 +343,12 @@ def main() -> None:
         options = ex_date
     )
     
+    strikes = get_strike_prices(calls)
+    strike_selection = st.sidebar.selectbox(
+        "Select Strike Price:", 
+        options = strikes
+    )
+    
     price = get_current_price(STOCK, token)
     
     st.header(f'Options Evaluations for {STOCK}')
@@ -352,12 +358,6 @@ def main() -> None:
     puts, calls, final_prices, hist_price = get_simulation(STOCK, 
                                                            token,
                                                            options_selection)
-    
-    strikes = get_strike_prices(calls)
-        strike_selection = st.selectbox(
-            "Select Strike Price:", 
-            options = strikes
-        )
     
     put_tab, call_tab, price_tab, hist_tab = st.tabs([f'{STOCK} Puts', 
                                                       f'{STOCK} Calls', 
