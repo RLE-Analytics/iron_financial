@@ -307,6 +307,26 @@ def strike_to_prob(dat, current_price, puts):
                       yaxis_ticksuffix = '%')
     return(fig)
 
+def get_strike_prices(dat):
+    strikes = dat['strike'].tolist()
+    
+    return(strikes)
+
+def get_string_info(dat, strike):
+    
+    bid = dat.loc[dat['strike'] == strike, 'bid']
+    ask = dat.loc[dat['strike'] == strike, 'ask']
+    
+    bid100 = bid * 100
+    ask100 = ask * 100
+    
+    ep_buy = dat.loc[dat['strike'] == strike, 'Effective Price (buy)']
+    ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)']
+    
+    strike100 = strike * 100
+    
+    return(bid, ask, bid100, ask100, ep_buy, ep_sell, strike100)
+
 
 def main() -> None:
     
@@ -346,7 +366,17 @@ def main() -> None:
         
         with sell_tab:
             
-            st.text('If I sell a put for a strike of $4 (expires on 4/28) for $0.02:\n\t- I make $2 if the stock stays above $4 (I want that to happen)\n\t- I have to buy the stock if it goes below $4 (I don\'t want that to happen)\n\t- I need to have $400 ($4 * 100) collateral')
+            strikes = get_strike_prices(puts)
+            strike_selection = st.sidebar.selectbox(
+                "Select Strike Price:", 
+                options = strikes
+            )
+            
+            bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
+            
+            sts = (f'If I sell a put for a strike of ${strike_selection} (expires on {options_selection}) for ${bid}:\n\t- I make ${bid100} if the stock stays above ${ep} (I want that to happen)\n\t- I have to buy the stock if it goes below ${ep} (I don\'t want that to happen)\n\t- I need to have ${strike100} (${strike_selection} * 100) collateral')
+            
+            st.text(sts)
             
             puts_sell = puts[['strike',
                               'bid',
