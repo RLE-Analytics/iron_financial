@@ -372,23 +372,20 @@ def main() -> None:
                 options = strikes
             )
             
-            col1, col2 = st.columns(2)
+            bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
+        
+            sts = (f'If I sell a put for a strike of ${strike_selection} (expires on {options_selection}) for ${bid}:\n\t- I make ${bid100} if the stock stays above ${ep_sell} (I want that to happen)\n\t- I have to buy the stock if it goes below ${ep_sell} (I don\'t want that to happen)\n\t- I need to have ${strike100} (${strike_selection} * 100) collateral')
             
-            with col1:
-                puts_sell = puts[['strike',
-                              'bid',
-                              'Effective Price (sell)',
-                              'Llhd Abv EP',
-                              'Llhd Abv Stk']]
+            st.text(sts)
             
-                st.dataframe(puts_sell)
+            puts_sell = puts[['strike',
+                          'bid',
+                          'Effective Price (sell)',
+                          'Llhd Abv EP',
+                          'Llhd Abv Stk']]
+        
+            st.dataframe(puts_sell)
             
-            with col2: 
-                bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
-            
-                sts = (f'If I sell a put for a strike of ${strike_selection} (expires on {options_selection}) for ${bid}:\n\t- I make ${bid100} if the stock stays above ${ep_sell} (I want that to happen)\n\t- I have to buy the stock if it goes below ${ep_sell} (I don\'t want that to happen)\n\t- I need to have ${strike100} (${strike_selection} * 100) collateral')
-                
-                st.text(sts)
             
         
         with buy_tab:
