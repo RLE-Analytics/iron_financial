@@ -158,37 +158,57 @@ def get_simulation(symbol,
     final_prices = price_paths[num_trading_days - 1]
     
     puts = opt_chain.loc[opt_chain['option_type'] == 'put']
-    puts['strike_minus_last'] = puts['strike'] - puts['ask']
+    puts['strike_minus_ask'] = puts['strike'] - puts['ask']
+    puts['strike_plus_bid'] = puts['strike'] + puts['bid']
 
     for strp in puts.strike:
         puts.loc[puts['strike'] == strp, 'likelihood_below'] = (
-            sum(final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_last'].item()) / num_samples)
+            sum(final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()) / num_samples)
         
-        puts.loc[puts['strike'] == strp, 'likelihood_strike'] = (
+        puts.loc[puts['strike'] == strp, 'likelihood_above'] = (
+            sum(final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()) / num_samples)
+        
+        puts.loc[puts['strike'] == strp, 'likelihood_strike_below'] = (
             sum(final_prices < strp) / num_samples)
+        
+        puts.loc[puts['strike'] == strp, 'likelihood_strike_above'] = (
+            sum(final_prices > strp) / num_samples)
     
     calls = opt_chain.loc[opt_chain['option_type'] == 'call']
-    calls['strike_plus_last'] = calls['strike'] + calls['ask']
+    calls['strike_plus_ask'] = calls['strike'] + calls['ask']
+    calls['strike_minus_bid'] = calls['strike'] - calls['bid']
 
     for strp in calls.strike:
         calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
-            sum(final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_last'].item()) / num_samples)
+            sum(final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_ask'].item()) / num_samples)
             
-        calls.loc[calls['strike'] == strp, 'likelihood_strike'] = (
+        calls.loc[calls['strike'] == strp, 'likelihood_below'] = (
+            sum(final_prices < calls.loc[calls['strike'] == strp, 'strike_minus_bid'].item()) / num_samples)
+            
+        calls.loc[calls['strike'] == strp, 'likelihood_strike_above'] = (
             sum(final_prices > strp) / num_samples)
+            
+        calls.loc[calls['strike'] == strp, 'likelihood_strike_below'] = (
+            sum(final_prices < strp) / num_samples)
 
-    puts = puts.rename(({'strike_minus_last': 'Effective Price',
+    puts = puts.rename(({'strike_minus_ask': 'Effective Price (buy)',
+                         'strike_plus_bid': 'Effective Price (sell)',
                          'last': 'Last Price',
                          'expiration_date': 'Expiration Date',
                          'likelihood_below': 'Llhd Blw EP',
-                         'likelihood_strike': 'Llhd Blw Stk'}),
+                         'likelihood_above': 'Llhd Abv EP',
+                         'likelihood_strike_above': 'Llhd Abv Stk'
+                         'likelihood_strike_below': 'Llhd Blw Stk'}),
                         axis = 'columns')
 
-    calls = calls.rename(({'strike_plus_last': 'Effective Price',
+    calls = calls.rename(({'strike_plus_ask': 'Effective Price (buy)',
+                           'strike_minus_bid': 'Effective Price (sell)',
                            'last': 'Last Price',
                            'expiration_date': 'Expiration Date',
                            'likelihood_above': 'Llhd Abv EP',
-                           'likelihood_strike': 'Llhd Abv Stk'}),
+                           'likelihood_below': 'Llhd Blw EP',
+                           'likelihood_strike_below': 'Llhd Blw Stk'
+                           'likelihood_strike_above': 'Llhd Abv Stk'}),
                         axis = 'columns')
     
     return(puts, calls, final_prices, hist_price)
