@@ -197,7 +197,7 @@ def get_simulation(symbol,
                          'expiration_date': 'Expiration Date',
                          'likelihood_below': 'Llhd Blw EP',
                          'likelihood_above': 'Llhd Abv EP',
-                         'likelihood_strike_above': 'Llhd Abv Stk'
+                         'likelihood_strike_above': 'Llhd Abv Stk',
                          'likelihood_strike_below': 'Llhd Blw Stk'}),
                         axis = 'columns')
 
