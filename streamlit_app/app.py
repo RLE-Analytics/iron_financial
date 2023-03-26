@@ -353,6 +353,12 @@ def main() -> None:
                                                            token,
                                                            options_selection)
     
+    strikes = get_strike_prices(calls)
+        strike_selection = st.selectbox(
+            "Select Strike Price:", 
+            options = strikes
+        )
+    
     put_tab, call_tab, price_tab, hist_tab = st.tabs([f'{STOCK} Puts', 
                                                       f'{STOCK} Calls', 
                                                       f'Simulated {STOCK} Prices',
@@ -360,12 +366,6 @@ def main() -> None:
     
     with put_tab:
         st.subheader("Put Options Data")
-        
-        strikes = get_strike_prices(puts)
-        strike_selection = st.selectbox(
-            "Select Strike Price:", 
-            options = strikes
-        )
         
         bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
         
@@ -415,12 +415,6 @@ def main() -> None:
     
     with call_tab:
         st.subheader("Call Options Data")
-        
-        strikes = get_strike_prices(calls)
-        strike_selection = st.selectbox(
-            "Select Strike Price:", 
-            options = strikes
-        )
         
         bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(calls, strike_selection)
         
