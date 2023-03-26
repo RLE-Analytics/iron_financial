@@ -427,13 +427,13 @@ def main() -> None:
             
             st.text(sts)
             
-            puts_sell = puts[['strike',
-                          'bid',
-                          'Effective Price (sell)',
-                          'Llhd Abv EP',
-                          'Llhd Abv Stk']]
+            calls_sell = calls[['strike',
+                                'bid',
+                                'Effective Price (sell)',
+                                'Llhd Abv EP',
+                                'Llhd Abv Stk']]
         
-            st.dataframe(puts_sell)
+            st.dataframe(calls_sell)
             
             
         
@@ -443,13 +443,13 @@ def main() -> None:
             
             st.text(sts)
             
-            puts_buy = puts[['strike',
-                             'ask',
-                             'Effective Price (buy)',
-                             'Llhd Blw EP',
-                             'Llhd Blw Stk']]
+            calls_buy = calls[['strike',
+                               'ask',
+                               'Effective Price (buy)',
+                               'Llhd Blw EP',
+                               'Llhd Blw Stk']]
         
-            st.dataframe(puts_buy)
+            st.dataframe(calls_buy)
             
             
             # bar = strike_to_effective_plot(puts, price, True)
