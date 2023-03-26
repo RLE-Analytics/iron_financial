@@ -362,10 +362,10 @@ def main() -> None:
         st.subheader("Put Options Data")
         
         strikes = get_strike_prices(puts)
-            strike_selection = st.selectbox(
-                "Select Strike Price:", 
-                options = strikes
-            )
+        strike_selection = st.selectbox(
+            "Select Strike Price:", 
+            options = strikes
+        )
         
         sell_tab, buy_tab = st.tabs([f'Sell {STOCK} Puts',
                                      f'Buy {STOCK} Puts'])
