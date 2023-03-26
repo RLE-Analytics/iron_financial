@@ -314,14 +314,14 @@ def get_strike_prices(dat):
 
 def get_string_info(dat, strike):
     
-    bid = dat.loc[dat['strike'] == strike, 'bid'].astype(float)
-    ask = dat.loc[dat['strike'] == strike, 'ask'].astype(float)
+    bid = dat.loc[dat['strike'] == strike, 'bid'].values
+    ask = dat.loc[dat['strike'] == strike, 'ask'].values
     
     bid100 = bid * 100
     ask100 = ask * 100
     
-    ep_buy = dat.loc[dat['strike'] == strike, 'Effective Price (buy)'].astype(float)
-    ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)'].astype(float)
+    ep_buy = dat.loc[dat['strike'] == strike, 'Effective Price (buy)'].values
+    ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)'].values
     
     strike100 = strike * 100
     
