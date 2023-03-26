@@ -314,14 +314,14 @@ def get_strike_prices(dat):
 
 def get_string_info(dat, strike):
     
-    bid = dat.loc[dat['strike'] == strike, 'bid']
-    ask = dat.loc[dat['strike'] == strike, 'ask']
+    bid = dat.loc[dat['strike'] == strike, 'bid'].astype(float)
+    ask = dat.loc[dat['strike'] == strike, 'ask'].astype(float)
     
     bid100 = bid * 100
     ask100 = ask * 100
     
-    ep_buy = dat.loc[dat['strike'] == strike, 'Effective Price (buy)']
-    ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)']
+    ep_buy = dat.loc[dat['strike'] == strike, 'Effective Price (buy)'].astype(float)
+    ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)'].astype(float)
     
     strike100 = strike * 100
     
@@ -367,7 +367,7 @@ def main() -> None:
         with sell_tab:
             
             strikes = get_strike_prices(puts)
-            strike_selection = st.sidebar.selectbox(
+            strike_selection = st.selectbox(
                 "Select Strike Price:", 
                 options = strikes
             )
