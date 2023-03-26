@@ -348,7 +348,13 @@ def main() -> None:
             
             st.text('If I sell a put for a strike of $4 (expires on 4/28) for $0.02:\n\t- I make $2 if the stock stays above $4 (I want that to happen)\n\t- I have to buy the stock if it goes below $4 (I don\'t want that to happen)\n\t- I need to have $400 ($4 * 100) collateral')
             
-            st.dataframe(puts)
+            puts_sell = puts[['strike',
+                              'bid',
+                              'Effective Price (sell)',
+                              'Llhd Abv EP',
+                              'Llhd Abv Stk']]
+            
+            st.dataframe(puts_sell)
         
         with buy_tab:
             bar = strike_to_effective_plot(puts, price, True)
