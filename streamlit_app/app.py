@@ -430,8 +430,8 @@ def main() -> None:
             calls_sell = calls[['strike',
                                 'bid',
                                 'Effective Price (sell)',
-                                'Llhd Abv EP',
-                                'Llhd Abv Stk']]
+                                'Llhd Blw EP',
+                                'Llhd Blw Stk']]
         
             st.dataframe(calls_sell)
             
@@ -446,8 +446,8 @@ def main() -> None:
             calls_buy = calls[['strike',
                                'ask',
                                'Effective Price (buy)',
-                               'Llhd Blw EP',
-                               'Llhd Blw Stk']]
+                               'Llhd Abv EP',
+                               'Llhd Abv Stk']]
         
             st.dataframe(calls_buy)
             
