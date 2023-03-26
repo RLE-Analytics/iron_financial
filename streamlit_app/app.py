@@ -175,8 +175,8 @@ def get_simulation(symbol,
             sum(final_prices > strp) / num_samples)
     
     calls = opt_chain.loc[opt_chain['option_type'] == 'call']
-    calls['strike_plus_ask'] = calls['strike'] - calls['ask']
-    calls['strike_minus_bid'] = calls['strike'] + calls['bid']
+    calls['strike_plus_ask'] = calls['strike'] + calls['ask']
+    calls['strike_minus_bid'] = calls['strike'] - calls['bid']
 
     for strp in calls.strike:
         calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
