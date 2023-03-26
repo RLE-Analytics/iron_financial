@@ -391,7 +391,7 @@ def main() -> None:
         with buy_tab:
             bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
         
-            sts = (f'If I buy a put for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays above ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes below ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes below ${ep_buy}')
+            sts = (f'If I buy a put for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays above ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes below ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes below ${ep_buy}\n\t- Things to figure out: what is the expected value if it does go below AND what is the overall expected payout.')
             
             st.text(sts)
             
