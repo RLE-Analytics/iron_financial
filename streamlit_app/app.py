@@ -367,12 +367,13 @@ def main() -> None:
             options = strikes
         )
         
+        bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
+        
         sell_tab, buy_tab = st.tabs([f'Sell {STOCK} Puts',
                                      f'Buy {STOCK} Puts'])
         
         with sell_tab:
             
-            bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
         
             sts = (f'If I sell a put for a strike of ${strike_selection} (expires on {options_selection}) for ${bid}:\n\t- I make ${bid100} if the stock stays above ${ep_sell} (I want that to happen)\n\t- I have to buy the stock if it goes below ${ep_sell} (I don\'t want that to happen)\n\t- I need to have ${strike100} (${strike_selection} * 100) collateral')
             
@@ -389,7 +390,6 @@ def main() -> None:
             
         
         with buy_tab:
-            bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(puts, strike_selection)
         
             sts = (f'If I buy a put for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays above ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes below ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes below ${ep_buy}\n\t- Things to figure out: what is the expected value if it does go below AND what is the overall expected payout.')
             
@@ -416,16 +416,56 @@ def main() -> None:
     with call_tab:
         st.subheader("Call Options Data")
         
-        st.dataframe(calls)
+        strikes = get_strike_prices(calls)
+        strike_selection = st.selectbox(
+            "Select Strike Price:", 
+            options = strikes
+        )
         
-        bar = strike_to_effective_plot(calls, price, False)
-        st.plotly_chart(bar)
+        bid, ask, bid100, ask100, ep_buy, ep_sell, strike100 = get_string_info(calls, strike_selection)
         
-        prob_bar = effective_to_prob(calls, price, False)
-        st.plotly_chart(prob_bar)
+        sell_tab, buy_tab = st.tabs([f'Sell {STOCK} Calls',
+                                     f'Buy {STOCK} Calls'])
         
-        strike_bar = strike_to_prob(calls, price, False)
-        st.plotly_chart(strike_bar)
+        with sell_tab:
+        
+            sts = (f'If I sell a call for a strike of ${strike_selection} (expires on {options_selection}) for ${bid}:\n\t- I make ${bid100} if the stock stays below ${ep_sell} (I want that to happen)\n\t- I have to sell the stock if it goes above ${ep_sell} (I don\'t want that to happen)\n\t- I need to have 100 shares collateral')
+            
+            st.text(sts)
+            
+            puts_sell = puts[['strike',
+                          'bid',
+                          'Effective Price (sell)',
+                          'Llhd Abv EP',
+                          'Llhd Abv Stk']]
+        
+            st.dataframe(puts_sell)
+            
+            
+        
+        with buy_tab:
+        
+            sts = (f'If I buy a call for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays below ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes above ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes above ${ep_buy}\n\t- Things to figure out: what is the expected value if it does go below AND what is the overall expected payout.')
+            
+            st.text(sts)
+            
+            puts_buy = puts[['strike',
+                             'ask',
+                             'Effective Price (buy)',
+                             'Llhd Blw EP',
+                             'Llhd Blw Stk']]
+        
+            st.dataframe(puts_buy)
+            
+            
+            # bar = strike_to_effective_plot(puts, price, True)
+            # st.plotly_chart(bar)
+            # 
+            # prob_bar = effective_to_prob(puts, price, True)
+            # st.plotly_chart(prob_bar)
+            # 
+            # strike_bar = strike_to_prob(puts, price, True)
+            # st.plotly_chart(strike_bar)
         
     with price_tab:
         final_prices = pd.DataFrame({"final_price": final_prices})
