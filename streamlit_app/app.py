@@ -197,10 +197,10 @@ def get_simulation(symbol,
         calls.loc[calls['strike'] == strp, 'likelihood_strike_below'] = (
             sum(final_prices < strp) / num_samples)
         
-        calls.loc[puts['strike'] == strp, 'ev_above_ep'] = (
+        calls.loc[calls['strike'] == strp, 'ev_above_ep'] = (
             np.mean(final_prices[final_prices > strp]))
         
-        calls.loc[puts['strike'] == strp, 'ev_below_ep'] = (
+        calls.loc[calls['strike'] == strp, 'ev_below_ep'] = (
             np.mean(final_prices[final_prices < strp]))
 
     puts = puts.rename(({'strike_minus_ask': 'Effective Price (buy)',
