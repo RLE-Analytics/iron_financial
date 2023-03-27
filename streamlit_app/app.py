@@ -407,21 +407,28 @@ def main() -> None:
             
         
         with buy_tab:
-        
-            puts_buy = puts[['strike',
-                             'ask',
-                             'Effective Price (buy)',
-                             'Llhd Blw EP',
-                             'Llhd Blw Stk',
-                             'EV Blw EP']]
             
-            puts_buy['Expected Value'] = 100 * (((1 - puts_buy['Llhd Blw EP']) * 
-                                                        (-1 * puts_buy['ask'])) + 
+            puts['cost'] = puts['ask'] * 100
+            
+            puts['Expected Value'] = 100 * (((1 - puts_buy['Llhd Blw EP']) * 
+                                                (-1 * puts_buy['ask'])) + 
                                                     (puts_buy['Llhd Blw EP'] * 
                                                         (puts_buy['strike'] - 
-                                                        puts_buy['EV Blw EP'])))
+                                                            puts_buy['EV Blw EP'])))
             
-            payout = puts_buy.loc[puts_buy['strike'] == strike_selection, 'Expected Value'].values
+            puts['Value of Put'] = (puts['strike'] - puts['Effective Price (buy)']) * 100
+            
+            puts_buy = puts[['strike',
+                             'ask',
+                             'cost'
+                             'Effective Price (buy)',
+                             'Value of Put',
+                             'Llhd Blw EP',
+                             'Llhd Blw Stk',
+                             'EV Blw EP',
+                             'Expected Value']]
+            
+            payout = puts_buy.loc[puts_buy['strike'] == strike_selection, 'Expected Value'].values[0]
             
             sts = (f'If I buy a put for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays above ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes below ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes below ${ep_buy}\n\t- If I make this play, I can expect a payout of {payout}')
             
