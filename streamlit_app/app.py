@@ -408,10 +408,6 @@ def main() -> None:
         
         with buy_tab:
         
-            sts = (f'If I buy a put for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays above ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes below ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes below ${ep_buy}\n\t- Things to figure out: what is the expected value if it does go below AND what is the overall expected payout.')
-            
-            st.text(sts)
-            
             puts_buy = puts[['strike',
                              'ask',
                              'Effective Price (buy)',
@@ -424,6 +420,12 @@ def main() -> None:
                                                     (puts_buy['Llhd Blw EP'] * 
                                                         (puts_buy['strike'] - 
                                                         puts_buy['EV Blw EP'])))
+            
+            payout = puts_buy.loc[puts_buy['strike'] == strike_selection, 'Expected Value'].values
+            
+            sts = (f'If I buy a put for a strike of ${strike_selection} (expires on {options_selection}) for ${ask}:\n\t- I lose ${ask100} if the stock stays above ${ep_buy} (I don\'t want that to happen)\n\t- I can buy the stock if it goes below ${ep_buy} (I want that to happen)\n\t- I will make money if the stock goes below ${ep_buy}\n\t- If I make this play, I can expect a payout of {payout}')
+            
+            st.text(sts)
         
             st.dataframe(puts_buy)
             
