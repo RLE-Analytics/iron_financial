@@ -410,11 +410,11 @@ def main() -> None:
             
             puts['cost'] = puts['ask'] * 100
             
-            puts['Expected Value'] = 100 * (((1 - puts_buy['Llhd Blw EP']) * 
-                                                (-1 * puts_buy['ask'])) + 
-                                                    (puts_buy['Llhd Blw EP'] * 
-                                                        (puts_buy['strike'] - 
-                                                            puts_buy['EV Blw EP'])))
+            puts['Expected Value'] = 100 * (((1 - puts['Llhd Blw EP']) * 
+                                                (-1 * puts['ask'])) + 
+                                                    (puts['Llhd Blw EP'] * 
+                                                        (puts['strike'] - 
+                                                            puts['EV Blw EP'])))
             
             puts['Value of Put'] = (puts['strike'] - puts['Effective Price (buy)']) * 100
             
