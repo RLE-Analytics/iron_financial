@@ -173,6 +173,12 @@ def get_simulation(symbol,
         
         puts.loc[puts['strike'] == strp, 'likelihood_strike_above'] = (
             sum(final_prices > strp) / num_samples)
+        
+        puts.loc[puts['strike'] == strp, 'ev_above_ep'] = (
+            np.mean(final_prices[final_prices > strp]))
+        
+        puts.loc[puts['strike'] == strp, 'ev_below_ep'] = (
+            np.mean(final_prices[final_prices < strp]))
     
     calls = opt_chain.loc[opt_chain['option_type'] == 'call']
     calls['strike_plus_ask'] = calls['strike'] + calls['ask']
@@ -190,6 +196,12 @@ def get_simulation(symbol,
             
         calls.loc[calls['strike'] == strp, 'likelihood_strike_below'] = (
             sum(final_prices < strp) / num_samples)
+        
+        calls.loc[puts['strike'] == strp, 'ev_above_ep'] = (
+            np.mean(final_prices[final_prices > strp]))
+        
+        calls.loc[puts['strike'] == strp, 'ev_below_ep'] = (
+            np.mean(final_prices[final_prices < strp]))
 
     puts = puts.rename(({'strike_minus_ask': 'Effective Price (buy)',
                          'strike_plus_bid': 'Effective Price (sell)',
@@ -197,6 +209,8 @@ def get_simulation(symbol,
                          'expiration_date': 'Expiration Date',
                          'likelihood_below': 'Llhd Blw EP',
                          'likelihood_above': 'Llhd Abv EP',
+                         'ev_below_ep': 'EV Blw EP',
+                         'ev_above_ep': 'EV Abv EP',
                          'likelihood_strike_above': 'Llhd Abv Stk',
                          'likelihood_strike_below': 'Llhd Blw Stk'}),
                         axis = 'columns')
@@ -207,6 +221,8 @@ def get_simulation(symbol,
                            'expiration_date': 'Expiration Date',
                            'likelihood_above': 'Llhd Abv EP',
                            'likelihood_below': 'Llhd Blw EP',
+                           'ev_below_ep': 'EV Blw EP',
+                           'ev_above_ep': 'EV Abv EP',
                            'likelihood_strike_below': 'Llhd Blw Stk',
                            'likelihood_strike_above': 'Llhd Abv Stk'}),
                         axis = 'columns')
@@ -383,7 +399,8 @@ def main() -> None:
                           'bid',
                           'Effective Price (sell)',
                           'Llhd Abv EP',
-                          'Llhd Abv Stk']]
+                          'Llhd Abv Stk',
+                          'EV Abv EP']]
         
             st.dataframe(puts_sell)
             
@@ -399,7 +416,8 @@ def main() -> None:
                              'ask',
                              'Effective Price (buy)',
                              'Llhd Blw EP',
-                             'Llhd Blw Stk']]
+                             'Llhd Blw Stk',
+                             'EV Blw EP']]
         
             st.dataframe(puts_buy)
             
@@ -431,7 +449,8 @@ def main() -> None:
                                 'bid',
                                 'Effective Price (sell)',
                                 'Llhd Blw EP',
-                                'Llhd Blw Stk']]
+                                'Llhd Blw Stk',
+                                'EV Blw EP']]
         
             st.dataframe(calls_sell)
             
@@ -447,7 +466,8 @@ def main() -> None:
                                'ask',
                                'Effective Price (buy)',
                                'Llhd Abv EP',
-                               'Llhd Abv Stk']]
+                               'Llhd Abv Stk',
+                               'EV Abv EP']]
         
             st.dataframe(calls_buy)
             
