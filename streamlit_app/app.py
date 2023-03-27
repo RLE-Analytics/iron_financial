@@ -418,6 +418,10 @@ def main() -> None:
                              'Llhd Blw EP',
                              'Llhd Blw Stk',
                              'EV Blw EP']]
+            
+            puts_buy['Expected Value'] = (((1 - puts_buy['Llhd Blw EP']) * 
+                                           (puts_buy[ask] * 100)) + 
+                                          (puts_buy['Llhd Blw EP'] * 'EV Blw EP'))
         
             st.dataframe(puts_buy)
             
