@@ -420,7 +420,7 @@ def main() -> None:
             
             puts_buy = puts[['strike',
                              'ask',
-                             'cost'
+                             'cost',
                              'Effective Price (buy)',
                              'Value of Put',
                              'Llhd Blw EP',
