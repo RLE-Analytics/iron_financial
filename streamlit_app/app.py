@@ -175,10 +175,10 @@ def get_simulation(symbol,
             sum(final_prices > strp) / num_samples)
         
         puts.loc[puts['strike'] == strp, 'ev_above_ep'] = (
-            np.mean(final_prices[final_prices > strp]))
+            np.mean(final_prices[final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid']])) 
         
         puts.loc[puts['strike'] == strp, 'ev_below_ep'] = (
-            np.mean(final_prices[final_prices < strp]))
+            np.mean(final_prices[final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask']])) 
     
     calls = opt_chain.loc[opt_chain['option_type'] == 'call']
     calls['strike_plus_ask'] = calls['strike'] + calls['ask']
@@ -198,10 +198,10 @@ def get_simulation(symbol,
             sum(final_prices < strp) / num_samples)
         
         calls.loc[calls['strike'] == strp, 'ev_above_ep'] = (
-            np.mean(final_prices[final_prices > strp]))
+            np.mean(final_prices[final_prices > strp])) # THIS IS WRONG
         
         calls.loc[calls['strike'] == strp, 'ev_below_ep'] = (
-            np.mean(final_prices[final_prices < strp]))
+            np.mean(final_prices[final_prices < strp])) # THIS IS WRONG
 
     puts = puts.rename(({'strike_minus_ask': 'Effective Price (buy)',
                          'strike_plus_bid': 'Effective Price (sell)',
