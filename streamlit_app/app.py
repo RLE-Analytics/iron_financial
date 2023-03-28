@@ -411,7 +411,7 @@ def main() -> None:
             puts.fillna(0, inplace = True)
             
             puts['Cost to Buy Option'] = puts['ask'] * -100
-            puts['Potential Gain'] = puts['strike'] - puts['EV Blw EP']
+            puts['Potential Gain'] = (puts['strike'] - puts['EV Blw EP']) * 100
             
             puts['Expected Value'] = ((puts['Llhd Abv EP'] * puts['Cost to Buy Option']) + 
                                       (puts['Llhd Blw EP'] * puts['Potential Gain']))
