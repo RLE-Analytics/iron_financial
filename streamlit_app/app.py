@@ -412,6 +412,7 @@ def main() -> None:
             
             puts['Cost to Buy Option'] = puts['ask'] * -100
             puts['Potential Gain'] = (puts['strike'] - puts['EV Blw EP']) * 100
+            puts['Llhd Abv EP'] = 1 - puts['Llhd Blw EP']
             
             puts['Expected Value'] = ((puts['Llhd Abv EP'] * puts['Cost to Buy Option']) + 
                                       (puts['Llhd Blw EP'] * puts['Potential Gain']))
