@@ -175,10 +175,10 @@ def get_simulation(symbol,
             sum(final_prices > strp) / num_samples)
         
         puts.loc[puts['strike'] == strp, 'ev_above_ep'] = (
-            np.mean(final_prices[final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid']])) 
+            np.mean(final_prices[final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()])) 
         
         puts.loc[puts['strike'] == strp, 'ev_below_ep'] = (
-            np.mean(final_prices[final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask']])) 
+            np.mean(final_prices[final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()])) 
     
     calls = opt_chain.loc[opt_chain['option_type'] == 'call']
     calls['strike_plus_ask'] = calls['strike'] + calls['ask']
