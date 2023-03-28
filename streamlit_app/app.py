@@ -408,6 +408,8 @@ def main() -> None:
         
         with buy_tab:
             
+            puts.fillna(0, inplace = True)
+            
             puts['Expected Value'] = 100 * (((1 - puts['Llhd Blw EP']) * 
                                                 (-1 * puts['ask'])) + 
                                                     (puts['Llhd Blw EP'] * 
