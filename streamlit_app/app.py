@@ -390,7 +390,8 @@ def main() -> None:
         
         with sell_tab:
             
-        
+            puts.fillna(0, inplace = True)
+            
             sts = (f'If I sell a put for a strike of ${strike_selection} (expires on {options_selection}) for ${bid}:\n\t- I make ${bid100} if the stock stays above ${ep_sell} (I want that to happen)\n\t- I have to buy the stock if it goes below ${ep_sell} (I don\'t want that to happen)\n\t- I need to have ${strike100} (${strike_selection} * 100) collateral')
             
             st.text(sts)
