@@ -244,6 +244,25 @@ def get_string_info(dat, strike):
     
     return(bid, ask, bid100, ask100, ep_buy, ep_sell, strike100)
 
+def get_latest_day(stock, current_date = datetime.now()):
+    if ('-USD' in stock or 
+            (current_date.date().weekday() >= 1 and 
+                current_date.date().weekday() <= 4)):
+        current_date = current_date.date()
+    else:
+        if current_date.date().weekday() == 5:
+            current_date = current_date.date() - timedelta(days = 1)
+        elif current_date.date().weekday() == 6: 
+            current_date = current_date.date() - timedelta(days = 2)
+        else: 
+            if current_date.hour + (current_date.minute / 60) < 9.5:
+                current_date = current_date.date() - timedelta(days = 3)
+            else:
+                current_date = current_date.date()
+    
+    return(current_date)
+
+
 
 def main() -> None:
     
