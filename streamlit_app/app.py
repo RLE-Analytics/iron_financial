@@ -226,7 +226,7 @@ def reshape_puts(puts):
     
     puts_buy = puts_buy.loc[puts_buy['EV'] > 0]
     puts_buy = puts_buy.sort_values(by = 'EV', ascending = False, ignore_index = True)
-    puts_buy = puts_buy.iloc[0]
+    # puts_buy = puts_buy.iloc[0]
     
     return(puts_buy)
 
