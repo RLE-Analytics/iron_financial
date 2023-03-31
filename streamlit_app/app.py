@@ -210,7 +210,12 @@ def reshape_puts(puts):
     puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost']) + 
                               (puts['Llhd Blw EP'] * puts['Gain']))
     
-    puts = puts[['strike',
+    # FILTER OUT ANY NEGATIVES
+    # ADD IN STOCK NAME
+    # ORDER BY MOST VALUABLE
+    # GET ALL 100 STOCKS
+    
+    puts_buy = puts[['strike',
                      'ask',
                      'EP Buy',
                      'Llhd Blw EP',
@@ -220,7 +225,7 @@ def reshape_puts(puts):
                      'Gain',
                      'EV']]
     
-    return(puts)
+    return(puts_buy)
 
 
 def get_latest_day(stock, current_date = datetime.now()):
