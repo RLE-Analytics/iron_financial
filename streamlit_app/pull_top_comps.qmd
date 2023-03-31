@@ -21,5 +21,7 @@ top_comp <- top_comp %>%
     slice(-1)
 
 write.csv(top_comp, "streamlit_app/top_companies.csv")
+
+paste0(top_comp$Symbol, collapse = "', '")
 ```
 
