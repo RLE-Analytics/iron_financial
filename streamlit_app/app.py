@@ -292,11 +292,11 @@ def main() -> None:
     
     puts.fillna(0, inplace = True)
             
-    puts['Cost to Buy Option'] = puts['ask'] * -100
-    puts['Potential Gain'] = (puts['strike'] - puts['EV Blw EP'] - puts['ask']) * 100
+    puts['Cost'] = puts['ask'] * -100
+    puts['Gain'] = (puts['strike'] - puts['EV Blw EP'] - puts['ask']) * 100
     puts['Llhd Abv EP'] = 1 - puts['Llhd Blw EP']
     
-    puts['Expected Value'] = ((puts['Llhd Abv EP'] * puts['Cost to Buy Option']) + 
+    puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost to Buy Option']) + 
                               (puts['Llhd Blw EP'] * puts['Potential Gain']))
     
     puts_buy = puts[['strike',
@@ -305,9 +305,9 @@ def main() -> None:
                      'Llhd Blw EP',
                      'Llhd Abv EP',
                      'EV Blw EP',
-                     'Cost to Buy Option',
-                     'Potential Gain',
-                     'Expected Value']]
+                     'Cost',
+                     'Gain',
+                     'EV']]
     
     st.dataframe(puts_buy)
             
