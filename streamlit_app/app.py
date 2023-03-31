@@ -231,7 +231,7 @@ def reshape_puts(puts):
     return(puts_buy)
 
 def get_list_of_stocks():
-    list_of_stocks = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'NVDA', 'BRK.A', 'TSLA', 'META', 'JNJ', 'V', 'UNH', 'XOM', 'WMT', 'JPM', 'PG', 'MA', 'LLY', 'CVX', 'HD', 'ABBV', 'MRK', 'AVGO', 'KO', 'PEP', 'ORCL', 'PFE', 'COST', 'BAC', 'TMO', 'CSCO', 'MCD', 'CRM', 'NKE', 'DHR', 'ACN', 'DIS', 'ADBE', 'ABT', 'LIN', 'TXN', 'UPS', 'VZ', 'AMD', 'CMCSA', 'NEE', 'NFLX', 'BMY', 'MS', 'PM', 'QCOM']
+    list_of_stocks = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'NVDA', 'BRK.A', 'TSLA', 'META']
     
     return(list_of_stocks)
 
