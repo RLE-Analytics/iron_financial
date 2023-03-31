@@ -165,6 +165,7 @@ def eval_puts(symbol, token, option_date, final_prices):
     
     puts = opt_chain.loc[opt_chain['option_type'] == 'put']
     puts['symbol'] = symbol
+    puts['CP'] = get_current_price(symbol, token)
     puts['strike_minus_ask'] = puts['strike'] - puts['ask']
     puts['strike_plus_bid'] = puts['strike'] + puts['bid']
 
@@ -212,6 +213,7 @@ def reshape_puts(puts):
                               (puts['Llhd Blw EP'] * puts['Gain']))
     
     puts_buy = puts[['symbol',
+                     'CP',
                      'strike',
                      'ask',
                      'EP Buy',
@@ -288,7 +290,6 @@ def main() -> None:
     
     st.header(f'Buying Put Options for 10 Largest Market Cap Stocks')
     st.text(f'Option Expiration Date of {options_selection}')
-    st.text(f'Current stock price: ${price}')
     
     final_puts = get_all_puts(token, options_selection)
     
