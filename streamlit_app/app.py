@@ -263,7 +263,7 @@ def main() -> None:
     st.text(f'Current stock price: ${price}')
     
     final_prices = get_simulation(STOCK, token, options_selection)
-    puts = eval_puts(symbol, token, option_date, final_prices)
+    puts = eval_puts(STOCK, token, options_selection, final_prices)
     puts_buy = reshape_puts(puts)
     
     st.dataframe(puts_buy)
