@@ -211,9 +211,6 @@ def reshape_puts(puts):
     puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost']) + 
                               (puts['Llhd Blw EP'] * puts['Gain']))
     
-    # ORDER BY MOST VALUABLE
-    # GET ALL 100 STOCKS
-    
     puts_buy = puts[['symbol',
                      'strike',
                      'ask',
@@ -226,9 +223,32 @@ def reshape_puts(puts):
                      'EV']]
     
     puts_buy = puts_buy.loc[puts_buy['EV'] > 0]
-    puts_buy = puts_buy.sort_values(by = 'EV', ascending = False)
+    puts_buy = puts_buy.sort_values(by = 'EV', ascending = False, ignore_index = True)
+    puts_buy = puts_buy.iloc[0]
     
     return(puts_buy)
+
+def get_list_of_stocks():
+    all_stocks = pd.read_csv("top_companies.csv")
+    
+    list_of_stocks = all_stocks['Symbol'].tolist()
+    
+    return(list_of_stocks)
+
+def get_all_puts(token, options_selection):
+    list_of_stocks = get_list_of_stocks()
+    
+    final_puts = pd.DataFrame()
+    
+    for STOCK in list_of_stocks:
+    
+        final_prices = get_simulation(STOCK, token, options_selection)
+        puts = eval_puts(STOCK, token, options_selection, final_prices)
+        tmp_puts = reshape_puts(puts)
+        
+        final_puts = pd.concat([final_puts, tmp_puts], ignoreindex = True)
+    
+    return(final_puts)
 
 
 def get_latest_day(stock, current_date = datetime.now()):
@@ -272,11 +292,9 @@ def main() -> None:
     st.text(f'Option Expiration Date of {options_selection}')
     st.text(f'Current stock price: ${price}')
     
-    final_prices = get_simulation(STOCK, token, options_selection)
-    puts = eval_puts(STOCK, token, options_selection, final_prices)
-    puts_buy = reshape_puts(puts)
+    final_puts = get_all_puts(token, options_selection)
     
-    st.dataframe(puts_buy)
+    st.dataframe(final_puts)
             
     
 if __name__ == "__main__":
