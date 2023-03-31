@@ -164,6 +164,7 @@ def eval_puts(symbol, token, option_date, final_prices):
     opt_chain = get_option_chain(symbol, token, option_date)
     
     puts = opt_chain.loc[opt_chain['option_type'] == 'put']
+    puts['symbol'] = symbol
     puts['strike_minus_ask'] = puts['strike'] - puts['ask']
     puts['strike_plus_bid'] = puts['strike'] + puts['bid']
 
@@ -210,12 +211,11 @@ def reshape_puts(puts):
     puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost']) + 
                               (puts['Llhd Blw EP'] * puts['Gain']))
     
-    # FILTER OUT ANY NEGATIVES
-    # ADD IN STOCK NAME
     # ORDER BY MOST VALUABLE
     # GET ALL 100 STOCKS
     
-    puts_buy = puts[['strike',
+    puts_buy = puts[['symbol',
+                     'strike',
                      'ask',
                      'EP Buy',
                      'Llhd Blw EP',
@@ -224,6 +224,9 @@ def reshape_puts(puts):
                      'Cost',
                      'Gain',
                      'EV']]
+    
+    puts_buy = puts_buy.loc[puts_buy['EV'] > 0]
+    puts_buy = puts_buy.sort_values(by = 'EV', ascending = False)
     
     return(puts_buy)
 

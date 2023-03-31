@@ -1,0 +1,25 @@
+---
+title: "pulling tables"
+format: html
+---
+
+
+```{r}
+library(rvest)
+library(dplyr)
+library(purrr)
+
+url <- "https://www.iweblists.com/us/commerce/MarketCapitalization.html"
+
+top_comp <- url %>% 
+    read_html() %>% 
+    html_table() %>% 
+    pluck(1)
+
+names(top_comp) <- top_comp[1, ]
+top_comp <- top_comp %>% 
+    slice(-1)
+
+write.csv(top_comp, "streamlit_app/top_companies.csv")
+```
+
