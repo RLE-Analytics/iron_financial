@@ -92,7 +92,6 @@ def get_current_price(symbol,
 
 def get_simulation(symbol, 
                    token,
-                   option_date,
                    num_samples = 100000,
                    sample_size = 20000, 
                    upper_scale = 0.60, 
@@ -100,8 +99,6 @@ def get_simulation(symbol,
                    lower_scale = 0.65, 
                    lower_shape = -0.1,
                    today = datetime.utcnow().date()):
-    
-    opt_chain = get_option_chain(symbol, token, option_date)
 
     date = {"Date": pd.date_range(datetime.today().date(), option_date)}
 
@@ -157,6 +154,12 @@ def get_simulation(symbol,
 
     final_prices = price_paths[num_trading_days - 1]
     
+    return(final_prices)
+
+def eval_puts(symbol, token, option_date, final_prices):
+    
+    opt_chain = get_option_chain(symbol, token, option_date)
+    
     puts = opt_chain.loc[opt_chain['option_type'] == 'put']
     puts['strike_minus_ask'] = puts['strike'] - puts['ask']
     puts['strike_plus_bid'] = puts['strike'] + puts['bid']
@@ -180,29 +183,9 @@ def get_simulation(symbol,
         puts.loc[puts['strike'] == strp, 'ev_below_ep'] = (
             np.mean(final_prices[final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()])) 
     
-    calls = opt_chain.loc[opt_chain['option_type'] == 'call']
-    calls['strike_plus_ask'] = calls['strike'] + calls['ask']
-    calls['strike_minus_bid'] = calls['strike'] + calls['bid']
+    return(puts)
 
-    for strp in calls.strike:
-        calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
-            sum(final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_ask'].item()) / num_samples)
-            
-        calls.loc[calls['strike'] == strp, 'likelihood_below'] = (
-            sum(final_prices < calls.loc[calls['strike'] == strp, 'strike_minus_bid'].item()) / num_samples)
-            
-        calls.loc[calls['strike'] == strp, 'likelihood_strike_above'] = (
-            sum(final_prices > strp) / num_samples)
-            
-        calls.loc[calls['strike'] == strp, 'likelihood_strike_below'] = (
-            sum(final_prices < strp) / num_samples)
-        
-        calls.loc[calls['strike'] == strp, 'ev_above_ep'] = (
-            np.mean(final_prices[final_prices > strp])) # THIS IS WRONG
-        
-        calls.loc[calls['strike'] == strp, 'ev_below_ep'] = (
-            np.mean(final_prices[final_prices < strp])) # THIS IS WRONG
-
+def reshape_puts(puts):
     puts = puts.rename(({'strike_minus_ask': 'EP Buy',
                          'strike_plus_bid': 'Effective Price (sell)',
                          'last': 'Last Price',
@@ -214,35 +197,28 @@ def get_simulation(symbol,
                          'likelihood_strike_above': 'Llhd Abv Stk',
                          'likelihood_strike_below': 'Llhd Blw Stk'}),
                         axis = 'columns')
+    
+    puts.fillna(0, inplace = True)
+            
+    puts['Cost'] = puts['ask'] * -100
+    puts['Gain'] = (puts['strike'] - puts['EV Blw EP'] - puts['ask']) * 100
+    puts['Llhd Abv EP'] = 1 - puts['Llhd Blw EP']
+    
+    puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost']) + 
+                              (puts['Llhd Blw EP'] * puts['Gain']))
+    
+    puts = puts[['strike',
+                     'ask',
+                     'EP Buy',
+                     'Llhd Blw EP',
+                     'Llhd Abv EP',
+                     'EV Blw EP',
+                     'Cost',
+                     'Gain',
+                     'EV']]
+    
+    return(puts)
 
-    calls = calls.rename(({'strike_plus_ask': 'EP Buy',
-                           'strike_minus_bid': 'Effective Price (sell)',
-                           'last': 'Last Price',
-                           'expiration_date': 'Expiration Date',
-                           'likelihood_above': 'Llhd Abv EP',
-                           'likelihood_below': 'Llhd Blw EP',
-                           'ev_below_ep': 'EV Blw EP',
-                           'ev_above_ep': 'EV Abv EP',
-                           'likelihood_strike_below': 'Llhd Blw Stk',
-                           'likelihood_strike_above': 'Llhd Abv Stk'}),
-                        axis = 'columns')
-    
-    return(puts, calls, final_prices, hist_price)
-
-def get_string_info(dat, strike):
-    
-    bid = dat.loc[dat['strike'] == strike, 'bid'].values[0]
-    ask = dat.loc[dat['strike'] == strike, 'ask'].values[0]
-    
-    bid100 = bid * 100
-    ask100 = ask * 100
-    
-    ep_buy = dat.loc[dat['strike'] == strike, 'EP Buy'].values[0]
-    ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)'].values[0]
-    
-    strike100 = strike * 100
-    
-    return(bid, ask, bid100, ask100, ep_buy, ep_sell, strike100)
 
 def get_latest_day(stock, current_date = datetime.now()):
     if ('-USD' in stock or 
@@ -285,29 +261,9 @@ def main() -> None:
     st.text(f'Option Expiration Date of {options_selection}')
     st.text(f'Current stock price: ${price}')
     
-    puts, calls, final_prices, hist_price = get_simulation(STOCK, 
-                                                           token,
-                                                           options_selection)
-                                                      
-    
-    puts.fillna(0, inplace = True)
-            
-    puts['Cost'] = puts['ask'] * -100
-    puts['Gain'] = (puts['strike'] - puts['EV Blw EP'] - puts['ask']) * 100
-    puts['Llhd Abv EP'] = 1 - puts['Llhd Blw EP']
-    
-    puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost']) + 
-                              (puts['Llhd Blw EP'] * puts['Gain']))
-    
-    puts_buy = puts[['strike',
-                     'ask',
-                     'EP Buy',
-                     'Llhd Blw EP',
-                     'Llhd Abv EP',
-                     'EV Blw EP',
-                     'Cost',
-                     'Gain',
-                     'EV']]
+    final_prices = get_simulation(STOCK, token, options_selection)
+    puts = eval_puts(symbol, token, option_date, final_prices)
+    puts_buy = reshape_puts(puts)
     
     st.dataframe(puts_buy)
             
