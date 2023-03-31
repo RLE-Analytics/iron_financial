@@ -203,7 +203,7 @@ def get_simulation(symbol,
         calls.loc[calls['strike'] == strp, 'ev_below_ep'] = (
             np.mean(final_prices[final_prices < strp])) # THIS IS WRONG
 
-    puts = puts.rename(({'strike_minus_ask': 'Effective Price (buy)',
+    puts = puts.rename(({'strike_minus_ask': 'EP Buy',
                          'strike_plus_bid': 'Effective Price (sell)',
                          'last': 'Last Price',
                          'expiration_date': 'Expiration Date',
@@ -215,7 +215,7 @@ def get_simulation(symbol,
                          'likelihood_strike_below': 'Llhd Blw Stk'}),
                         axis = 'columns')
 
-    calls = calls.rename(({'strike_plus_ask': 'Effective Price (buy)',
+    calls = calls.rename(({'strike_plus_ask': 'EP Buy',
                            'strike_minus_bid': 'Effective Price (sell)',
                            'last': 'Last Price',
                            'expiration_date': 'Expiration Date',
@@ -237,7 +237,7 @@ def get_string_info(dat, strike):
     bid100 = bid * 100
     ask100 = ask * 100
     
-    ep_buy = dat.loc[dat['strike'] == strike, 'Effective Price (buy)'].values[0]
+    ep_buy = dat.loc[dat['strike'] == strike, 'EP Buy'].values[0]
     ep_sell = dat.loc[dat['strike'] == strike, 'Effective Price (sell)'].values[0]
     
     strike100 = strike * 100
@@ -301,7 +301,7 @@ def main() -> None:
     
     puts_buy = puts[['strike',
                      'ask',
-                     'Effective Price (buy)',
+                     'EP Buy',
                      'Llhd Blw EP',
                      'Llhd Abv EP',
                      'EV Blw EP',
