@@ -244,7 +244,7 @@ def get_all_puts(token, options_selection):
         puts = eval_puts(STOCK, token, options_selection, final_prices)
         tmp_puts = reshape_puts(puts)
         
-        final_puts = pd.concat([final_puts, tmp_puts], ignoreindex = True)
+        final_puts = pd.concat([final_puts, tmp_puts], ignore_index = True)
     
     return(final_puts)
 
