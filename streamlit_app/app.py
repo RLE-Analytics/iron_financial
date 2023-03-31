@@ -211,6 +211,8 @@ def reshape_puts(puts):
     
     puts['EV'] = ((puts['Llhd Abv EP'] * puts['Cost']) + 
                               (puts['Llhd Blw EP'] * puts['Gain']))
+                              
+    puts['CtEV'] = puts['EV'] / (-1 * puts['Cost'])
     
     puts_buy = puts[['symbol',
                      'CP',
@@ -222,7 +224,8 @@ def reshape_puts(puts):
                      'EV Blw EP',
                      'Cost',
                      'Gain',
-                     'EV']]
+                     'EV',
+                     'CtEV']]
     
     puts_buy = puts_buy.loc[puts_buy['EV'] > 0]
     puts_buy = puts_buy.sort_values(by = 'EV', ascending = False, ignore_index = True)
