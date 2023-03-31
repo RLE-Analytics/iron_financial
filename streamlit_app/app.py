@@ -10,6 +10,8 @@ from scipy.stats import genextreme
 from random import choices
 import plotly.express as px
 
+NUM_SAMPLES = 100000
+
 def get_token():
     token = st.secrets.tradier['prod_token']
     
@@ -93,7 +95,7 @@ def get_current_price(symbol,
 def get_simulation(symbol, 
                    token,
                    option_date,
-                   num_samples = 100000,
+                   num_samples = NUM_SAMPLES,
                    sample_size = 20000, 
                    upper_scale = 0.60, 
                    upper_shape = -0.09, 
@@ -167,16 +169,16 @@ def eval_puts(symbol, token, option_date, final_prices):
 
     for strp in puts.strike:
         puts.loc[puts['strike'] == strp, 'likelihood_below'] = (
-            sum(final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()) / num_samples)
+            sum(final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()) / NUM_SAMPLES)
         
         puts.loc[puts['strike'] == strp, 'likelihood_above'] = (
-            sum(final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()) / num_samples)
+            sum(final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()) / NUM_SAMPLES)
         
         puts.loc[puts['strike'] == strp, 'likelihood_strike_below'] = (
-            sum(final_prices < strp) / num_samples)
+            sum(final_prices < strp) / NUM_SAMPLES)
         
         puts.loc[puts['strike'] == strp, 'likelihood_strike_above'] = (
-            sum(final_prices > strp) / num_samples)
+            sum(final_prices > strp) / NUM_SAMPLES)
         
         puts.loc[puts['strike'] == strp, 'ev_above_ep'] = (
             np.mean(final_prices[final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()])) 
