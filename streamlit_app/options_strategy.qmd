@@ -8,6 +8,7 @@ format: html
 ```{r reticulate}
 #| code-fold: true
 
+library(ggplot2)
 library(reticulate)
 library(rvest)
 library(dplyr)
@@ -326,7 +327,7 @@ def get_all_puts(token, options_selection):
 
 ```{python main}
 #| code-fold: true
-options_selection = '2023-04-28'
+options_selection = '2023-04-06'
 
 final_puts = get_all_puts(token, options_selection)
 ```
@@ -340,7 +341,7 @@ py$final_puts %>%
     arrange(desc(EV))
 
 picks <- tibble()
-total_available <- 10000
+total_available <- 1000
 picked_stocks <- c()
 
 while(total_available > 0) {
@@ -356,15 +357,71 @@ while(total_available > 0) {
     
     total_available <- total_available + cost
     
+    if(total_available < 0) {
+        next
+    }
+    
     picked_stocks <- c(picked_stocks, symbol_picked)
     
     picks <- bind_rows(picks, tmp)
 }
 
-write.csv(picks, "put_picks_04012023.csv")
+
+
+# write.csv(picks, "put_picks_04012023.csv")
 
 ```
+# How many outcomes?
+
+There are 2^n^ potential outcomes. In this case, n is `r length(picks$symbol)` 
+and there are `r 2^length(picks$symbol)` outcomes. What is each outcome and 
+what is the likelihood of each?
+
+```{r}
+NUM_SAMPLES <- 10000
+NUM_PICKS <- length(picks$symbol)
+
+sim_picks <- tibble(symbol = rep(unique(picks$symbol), NUM_SAMPLES),
+                    sample = rep(1:NUM_SAMPLES, each = NUM_PICKS),
+                    runif = runif(NUM_SAMPLES * NUM_PICKS)) %>% 
+    left_join(picks, by = "symbol") %>% 
+    mutate(winner = ifelse(runif <= `Llhd Blw EP`, TRUE, FALSE), 
+           payout = ifelse(winner, Gain, Cost))
+
+sim_sum <- sim_picks %>% 
+    group_by(sample) %>% 
+    summarise(winners = paste0(sort(unique(symbol[winner])), collapse = ","),
+              num_win = sum(winner),
+              payout = sum(payout))
+
+prob_win <- sim_sum %>% 
+    group_by(winners) %>% 
+    summarise(count = n()) %>% 
+    mutate(prob = count / NUM_SAMPLES) %>% 
+    left_join(sim_sum, by = "winners") %>%
+    select(-sample) %>% 
+    unique() %>% 
+    mutate(ev = prob * payout)
+
+prob_win %>% 
+    arrange(payout) %>% 
+    mutate(cum_prob = cumsum(prob))
 
 
+ggplot(prob_win, aes(x = reorder(winners, payout), y = prob)) + 
+    geom_bar(stat = 'identity') +
+    geom_vline(xintercept = 0, color = "red") + 
+    theme(axis.ticks = element_blank(),
+          axis.text.x = element_text(angle = 90, hjust = 1))
+
+summary(sim_sum$payout)
+
+ggplot(sim_sum, aes(x = payout)) + 
+    geom_histogram(bins = 8) + 
+    geom_vline(xintercept = 0, color = "red")
+```
+
+NEXT QUESTION TO ANSWER: How correlated are these stocks? How unfair is it to 
+think each is independent of one another. 
 
 
