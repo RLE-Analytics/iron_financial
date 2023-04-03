@@ -32,7 +32,6 @@ top_comp <- top_comp %>%
 # GET LIBRARIES
 import warnings
 warnings.simplefilter(action = 'ignore', category = FutureWarning)
-warnings.simplefilter(action = 'ignore', category = SettingWithCopyWarning)
 
 import streamlit as st
 import math
@@ -252,6 +251,40 @@ def eval_puts(symbol, token, option_date, final_prices):
     
     return(puts)
 
+def eval_calls(symbol, token, option_date, final_prices):
+    
+    opt_chain = get_option_chain(symbol, token, option_date)
+    if type(opt_chain) != pd.core.frame.DataFrame:
+        return(-1)
+    
+    calls = opt_chain.loc[opt_chain['option_type'] == 'call']
+    calls['symbol'] = symbol
+    calls['CP'] = get_current_price(symbol, token)
+    calls['strike_plus_ask'] = calls['strike'] + calls['ask']
+    calls['strike_minus_bid'] = calls['strike'] - calls['bid']
+
+    for strp in calls.strike:
+        calls.loc[calls['strike'] == strp, 'likelihood_above'] = (
+            sum(final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_ask'].item()) / NUM_SAMPLES)
+        
+        calls.loc[calls['strike'] == strp, 'likelihood_below'] = (
+            sum(final_prices < calls.loc[calls['strike'] == strp, 'strike_minus_bid'].item()) / NUM_SAMPLES)
+        
+        calls.loc[calls['strike'] == strp, 'likelihood_strike_below'] = (
+            sum(final_prices < strp) / NUM_SAMPLES)
+        
+        calls.loc[calls['strike'] == strp, 'likelihood_strike_above'] = (
+            sum(final_prices > strp) / NUM_SAMPLES)
+        
+        calls.loc[calls['strike'] == strp, 'ev_below_ep'] = (
+            np.mean(final_prices[final_prices < calls.loc[calls['strike'] == strp, 'strike_minus_bid'].item()])) 
+        
+        calls.loc[calls['strike'] == strp, 'ev_above_ep'] = (
+            np.mean(final_prices[final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_ask'].item()])) 
+    
+    return(calls)
+
+
 def reshape_puts(puts):
     puts = puts.rename(({'strike_minus_ask': 'EP Buy',
                          'strike_plus_bid': 'Effective Price (sell)',
@@ -291,9 +324,55 @@ def reshape_puts(puts):
     
     puts_buy = puts_buy.loc[puts_buy['EV'] > 0]
     puts_buy = puts_buy.sort_values(by = 'EV', ascending = False, ignore_index = True)
+    puts_buy['type'] = 'put'
     # puts_buy = puts_buy.iloc[0]
     
     return(puts_buy)
+
+def reshape_calls(calls):
+    calls = calls.rename(({'strike_plus_ask': 'EP Buy',
+                         'strike_minus_bid': 'Effective Price (sell)',
+                         'last': 'Last Price',
+                         'expiration_date': 'Expiration Date',
+                         'likelihood_below': 'Llhd Blw EP',
+                         'likelihood_above': 'Llhd Abv EP',
+                         'ev_below_ep': 'EV Blw EP',
+                         'ev_above_ep': 'EV Abv EP',
+                         'likelihood_strike_above': 'Llhd Abv Stk',
+                         'likelihood_strike_below': 'Llhd Blw Stk'}),
+                        axis = 'columns')
+    
+    calls.fillna(0, inplace = True)
+            
+    calls['Cost'] = calls['ask'] * -100
+    calls['Gain'] = (calls['EV Abv EP'] - calls['strike'] - calls['ask']) * 100
+    calls['Llhd Blw EP'] = 1 - calls['Llhd Abv EP']
+    
+    calls['EV'] = ((calls['Llhd Blw EP'] * calls['Cost']) + 
+                              (calls['Llhd Abv EP'] * calls['Gain']))
+                              
+    calls['CtEV'] = calls['EV'] / (-1 * calls['Cost'])
+    
+    calls_buy = calls[['symbol',
+                     'CP',
+                     'strike',
+                     'ask',
+                     'EP Buy',
+                     'Llhd Blw EP',
+                     'Llhd Abv EP',
+                     'EV Abv EP',
+                     'Cost',
+                     'Gain',
+                     'EV',
+                     'CtEV']]
+    
+    calls_buy = calls_buy.loc[calls_buy['EV'] > 0]
+    calls_buy = calls_buy.sort_values(by = 'EV', ascending = False, ignore_index = True)
+    calls_buy['type'] = 'call'
+    # puts_buy = puts_buy.iloc[0]
+    
+    return(calls_buy)
+
 
 def get_list_of_stocks():
     list_of_stocks = r.top_comp['Symbol'].tolist()
@@ -323,13 +402,42 @@ def get_all_puts(token, options_selection):
         print(f'{STOCK} done')
     
     return(final_puts)
+
+def get_all_options(token, options_selection):
+    list_of_stocks = get_list_of_stocks()
+    
+    final_puts = pd.DataFrame()
+    final_calls = pd.DataFrame()
+    
+    for STOCK in list_of_stocks:
+        print(f'{STOCK} starting')
+    
+        final_prices = get_simulation(STOCK, token, options_selection)
+        if type(final_prices) != np.ndarray:
+            continue
+        
+        puts = eval_puts(STOCK, token, options_selection, final_prices)
+        if type(puts) == pd.core.frame.DataFrame:
+            tmp_puts = reshape_puts(puts)
+            final_puts = pd.concat([final_puts, tmp_puts], ignore_index = True)
+        
+        calls = eval_calls(STOCK, token, options_selection, final_prices)
+        if type(calls) == pd.core.frame.DataFrame:
+            tmp_calls = reshape_calls(calls)
+            final_calls = pd.concat([final_calls, tmp_calls], ignore_index = True)
+        
+        print(f'{STOCK} done')
+    
+    return(final_puts, final_calls)
+
 ```
 
 ```{python main}
 #| code-fold: true
 options_selection = '2023-04-06'
 
-final_puts = get_all_puts(token, options_selection)
+# final_puts = get_all_puts(token, options_selection)
+final_puts, final_calls = get_all_options(token, options_selection)
 ```
 
 ```{r evaluate}
@@ -338,15 +446,22 @@ final_puts = get_all_puts(token, options_selection)
 options(scipen = 999)
 
 py$final_puts %>% 
+    filter(Cost >= -100) %>%
+    arrange(desc(EV))
+
+py$final_calls %>% 
+    filter(Cost >= -100) %>%
     arrange(desc(EV))
 
 picks <- tibble()
-total_available <- 1000
+total_available <- 500
 picked_stocks <- c()
 
 while(total_available > 0) {
     tmp <- py$final_puts %>% 
-        filter(!py$final_puts$symbol %in% picked_stocks) %>% 
+        bind_rows(py$final_calls)
+        filter(!py$final_puts$symbol %in% picked_stocks & 
+                   Cost >= -100) %>% 
         filter(EV == max(EV)) %>% 
         head(1)
     
@@ -368,7 +483,7 @@ while(total_available > 0) {
 
 
 
-# write.csv(picks, "put_picks_04012023.csv")
+# write.csv(picks, "put_picks_04032023.csv")
 
 ```
 # How many outcomes?
