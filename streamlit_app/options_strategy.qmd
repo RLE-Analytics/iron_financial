@@ -456,14 +456,40 @@ py$final_calls %>%
 picks <- tibble()
 total_available <- 500
 picked_stocks <- c()
+type <- NA
 
 while(total_available > 0) {
-    tmp <- py$final_puts %>% 
-        bind_rows(py$final_calls)
-        filter(!py$final_puts$symbol %in% picked_stocks & 
-                   Cost >= -100) %>% 
-        filter(EV == max(EV)) %>% 
-        head(1)
+    if(is.na(type)) {
+        tmp <- py$final_puts %>% 
+            bind_rows(py$final_calls) %>% 
+            filter(!symbol %in% picked_stocks & 
+                       Cost >= -100) %>% 
+            filter(EV == max(EV)) %>% 
+            head(1)
+        
+        type <- tmp$type[1]
+    } else if (type == "call") {
+        tmp <- py$final_puts %>% 
+            bind_rows(py$final_calls) %>% 
+            filter(!symbol %in% picked_stocks & 
+                       Cost >= -100 & 
+                       type == "put") %>% 
+            filter(EV == max(EV)) %>% 
+            head(1)
+        
+        type <- "put"
+    } else {
+        tmp <- py$final_puts %>% 
+            bind_rows(py$final_calls) %>% 
+            filter(!symbol %in% picked_stocks & 
+                       Cost >= -100 & 
+                       type == "call") %>% 
+            filter(EV == max(EV)) %>% 
+            head(1)
+        
+        type <- "call"
+    }
+    
     
     symbol_picked <- tmp %>% 
         pull(symbol)
@@ -483,7 +509,7 @@ while(total_available > 0) {
 
 
 
-# write.csv(picks, "put_picks_04032023.csv")
+# write.csv(picks, "put_picks_04032023_mixed.csv")
 
 ```
 # How many outcomes?
@@ -500,7 +526,9 @@ sim_picks <- tibble(symbol = rep(unique(picks$symbol), NUM_SAMPLES),
                     sample = rep(1:NUM_SAMPLES, each = NUM_PICKS),
                     runif = runif(NUM_SAMPLES * NUM_PICKS)) %>% 
     left_join(picks, by = "symbol") %>% 
-    mutate(winner = ifelse(runif <= `Llhd Blw EP`, TRUE, FALSE), 
+    mutate(winner = ifelse((type == "put" & runif <= `Llhd Blw EP`) | 
+                               (type == "call" & runif >= `Llhd Abv EP`), 
+                           TRUE, FALSE), 
            payout = ifelse(winner, Gain, Cost))
 
 sim_sum <- sim_picks %>% 
@@ -519,7 +547,7 @@ prob_win <- sim_sum %>%
     mutate(ev = prob * payout)
 
 prob_win %>% 
-    arrange(payout) %>% 
+    arrange(desc(prob)) %>% 
     mutate(cum_prob = cumsum(prob))
 
 
