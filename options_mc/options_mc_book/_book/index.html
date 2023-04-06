@@ -73,7 +73,7 @@
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
-<li class="chapter" data-level="2" data-path="ev.html"><a href="ev.html"><i class="fa fa-check"></i><b>2</b> Calculating Expected Value</a></li>
+<li class="chapter" data-level="2" data-path="ev.html"><a href="ev.html"><i class="fa fa-check"></i><b>2</b> Calculating an Option’s Expected Value</a></li>
 <li class="divider"></li>
 <li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
 
@@ -105,16 +105,17 @@
 the expected outcome for security<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
 derivatives<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.
 In this paper, I am specifically
-referring to put options<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> and call options<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> when I reference derivatives. To do this, I
-calculate several probabilities<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and expected values, then combine them to
-understand if it is worthwhile to purchase a security derivative.</p>
-<p>These probabilities are <a href="#link-to-bootstrap">bootstrapped</a> through the use of a
-<a href="#link-to-mc">Monte Carlo simulation</a>. I am first simulating the price of the
-security on the strike date. I am then able, with this information, to obtain
-the probability the security will be above or below a certain strike and the
-expected value of the security if it does go above (below) the strike for a call
-(put). Combining this with the cost to purchase that derivative, I am able to
-create an expected value for a range of security derivatives.</p>
+referring to put options<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> and call options<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> on stocks when I reference security derivatives.
+To do this, I
+calculate several probabilities<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and find the expected gain or cost, then combine them to calculate
+the expected value<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> and understand if it is worthwhile to purchase.</p>
+<p>These probabilities are bootstrapped<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> through the use of a Monte Carlo simulation<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>.</p>
+<p>I am first simulating the distribution of the price of the security on the
+strike date using the Monte Carlo simulation. I am then able, with this
+information, to obtain the probability the security will be above (below) a
+certain strike and the expected value of the security if it does go above
+(below) the strike for a call (put). Combining this with the cost to purchase
+that derivative, I am able to create an expected value for a range of options.</p>
 
 </div>
 <div class="footnotes">
@@ -168,6 +169,33 @@ chance that a specific event will occur, expressed as a number between 0 and 1.
 probability of 1 means that the event is certain to occur. A probability of
 0.5 (or 50%) means that the event has an equal chance of occurring or not
 occurring.<a href="index.html#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>Expected value is a concept used in statistics
+to calculate the long-term average value of a random variable, taking into
+account the probability of each possible outcome.<br><br>The expected value is
+calculated by multiplying each possible outcome by its probability and adding up
+all the products. In other words, it is the weighted average of all possible
+outcomes.<a href="index.html#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn7"><p>A bootstrap sample is a sample of data
+that is created by randomly selecting observations with replacement from a
+larger data set. The term “bootstrap” comes from the idea of pulling oneself up
+by one’s bootstraps, as the bootstrap method allows us to estimate the
+properties of a population by repeatedly resampling from a smaller sample.
+<br><br>To create a bootstrap sample, we start by randomly selecting an
+observation from the original data set and adding it to the new sample. We then
+put the observation back in the original data set and repeat this process,
+selecting a new observation with replacement each time, until we have a sample
+of the desired size. By selecting with replacement, some observations may be
+selected more than once, while others may not be selected at all.<br><br>
+Bootstrap sampling is commonly used in statistics to estimate the sampling
+distribution of a statistic, such as the mean or variance, when the underlying
+population distribution is unknown or difficult to model. By repeatedly
+resampling from the available data, we can generate many different bootstrap
+samples and use them to estimate the variability and uncertainty of the
+statistic of interest.<a href="index.html#fnref7" class="footnote-back">↩︎</a></p></li>
+<li id="fn8"><p>A Monte
+Carlo simulation is a computational method used to estimate the probability
+distribution of an outcome by generating a large number of random samples or
+scenarios and analyzing their aggregate behavior.<a href="index.html#fnref8" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
             </section>

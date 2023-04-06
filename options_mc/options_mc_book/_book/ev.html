@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>2 Calculating Expected Value | Buying Derivatives - A Monte Carlo Approach</title>
+  <title>2 Calculating an Option’s Expected Value | Buying Derivatives - A Monte Carlo Approach</title>
   <meta name="description" content="This is a strategy for buying puts and calls." />
   <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="2 Calculating Expected Value | Buying Derivatives - A Monte Carlo Approach" />
+  <meta property="og:title" content="2 Calculating an Option’s Expected Value | Buying Derivatives - A Monte Carlo Approach" />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="This is a strategy for buying puts and calls." />
   <meta name="github-repo" content="RLE-Analytics/iron_financial" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="2 Calculating Expected Value | Buying Derivatives - A Monte Carlo Approach" />
+  <meta name="twitter:title" content="2 Calculating an Option’s Expected Value | Buying Derivatives - A Monte Carlo Approach" />
   
   <meta name="twitter:description" content="This is a strategy for buying puts and calls." />
   
@@ -73,7 +73,7 @@
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
-<li class="chapter" data-level="2" data-path="ev.html"><a href="ev.html"><i class="fa fa-check"></i><b>2</b> Calculating Expected Value</a></li>
+<li class="chapter" data-level="2" data-path="ev.html"><a href="ev.html"><i class="fa fa-check"></i><b>2</b> Calculating an Option’s Expected Value</a></li>
 <li class="divider"></li>
 <li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
 
@@ -95,8 +95,8 @@
 
             <section class="normal" id="section-">
 <div id="ev" class="section level1 hasAnchor" number="2">
-<h1><span class="header-section-number">2</span> Calculating Expected Value<a href="ev.html#ev" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>The expected value for each security derivative can be calculated as follows:</p>
+<h1><span class="header-section-number">2</span> Calculating an Option’s Expected Value<a href="ev.html#ev" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>The expected value for each option can be calculated as follows:</p>
 <p><span class="math display" id="eq:puts">\[\begin{equation}
 E_p(k) = (P_{ae} * C) + (P_{be} * G)
 \tag{2.1}
@@ -110,11 +110,26 @@ E_c(k) = (P_{be} * C) + (P_{ae} * G)
 <li><span class="math inline">\(E_p(k)\)</span> is the expected value of a put at strike price <span class="math inline">\(k\)</span></li>
 <li><span class="math inline">\(E_c(k)\)</span> is the expected value of a call at strike price <span class="math inline">\(k\)</span></li>
 <li><span class="math inline">\(P_{ae}\)</span> is the probability a security price on the strike date is above the
-<em>expected price</em></li>
-<li><span class="math inline">\(P_{be}\)</span> is the probability a security price on the strike date is below the
-<em>expected price</em></li>
-<li><span class="math inline">\(C\)</span> is the cost to but the derivative</li>
-<li><span class="math inline">\(G\)</span> is the expected gain if the derivative is in the money</li>
+<em>effective price</em><a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>, <span class="math inline">\(k_e\)</span>
+<ul>
+<li>This is calculated with the Monte Carlo simulation</li>
+<li><span class="math inline">\(P_{ae} = \frac{r_{ae}}{r_t}\)</span> where <span class="math inline">\(r_{ae}\)</span> is the number of runs above
+the expected price and <span class="math inline">\(r_t\)</span> are the total runs</li>
+</ul></li>
+<li><span class="math inline">\(P_{be}\)</span> = 1 - <span class="math inline">\(P_{ae}\)</span> is the probability a security price on the strike date
+is below the <em>effective price</em>, <span class="math inline">\(k_e\)</span></li>
+<li><span class="math inline">\(C = 100c\)</span> is the cost to buy the option
+<ul>
+<li><span class="math inline">\(c\)</span> is the cost of a single option (options are typically bought/sold in
+lots of 100)</li>
+</ul></li>
+<li><span class="math inline">\(G = 100(E_{p_s}(p_s|p_s&gt;k_e) - c)\)</span> is the expected gain if the derivative
+is in the money
+<ul>
+<li><span class="math inline">\(E_{p_s}(p_s|p_s&gt;k_e)\)</span> is the expected value of the of the price of the
+stock, <span class="math inline">\(p_s\)</span>, given that the price of the stock has exceeded the effective
+price, <span class="math inline">\(k_e\)</span> (for calls).</li>
+</ul></li>
 </ul>
 
 </div>
@@ -171,6 +186,44 @@ E_c(k) = (P_{be} * C) + (P_{ae} * G)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="footnotes">
+<hr />
+<ol start="9">
+<li id="fn9"><p>The effective price is the strike price plus the option cost
+(for calls) - you cannot make money on the option until you cross this
+threshold<a href="ev.html#fnref9" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
             </section>
 
           </div>
