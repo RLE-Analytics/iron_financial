@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Buying Derivatives - A Monte Carlo Approach</title>
+  <title>2 Calculating Expected Value | Buying Derivatives - A Monte Carlo Approach</title>
   <meta name="description" content="This is a strategy for buying puts and calls." />
   <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Buying Derivatives - A Monte Carlo Approach" />
+  <meta property="og:title" content="2 Calculating Expected Value | Buying Derivatives - A Monte Carlo Approach" />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="This is a strategy for buying puts and calls." />
   <meta name="github-repo" content="RLE-Analytics/iron_financial" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Buying Derivatives - A Monte Carlo Approach" />
+  <meta name="twitter:title" content="2 Calculating Expected Value | Buying Derivatives - A Monte Carlo Approach" />
   
   <meta name="twitter:description" content="This is a strategy for buying puts and calls." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-
-<link rel="next" href="ev.html"/>
+<link rel="prev" href="index.html"/>
+<link rel="next" href="literature.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -73,7 +73,7 @@
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
-<li class="chapter" data-level="2" data-path="ev.html"><a href="ev.html"><i class="fa fa-check"></i><b>2</b> Expected Value</a></li>
+<li class="chapter" data-level="2" data-path="ev.html"><a href="ev.html"><i class="fa fa-check"></i><b>2</b> Calculating Expected Value</a></li>
 <li class="chapter" data-level="3" data-path="literature.html"><a href="literature.html"><i class="fa fa-check"></i><b>3</b> Literature</a></li>
 <li class="chapter" data-level="4" data-path="methods.html"><a href="methods.html"><i class="fa fa-check"></i><b>4</b> Methods</a>
 <ul>
@@ -106,24 +106,32 @@
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="header">
-<h1 class="title">Buying Derivatives - A Monte Carlo Approach</h1>
-<p class="author"><em>Jake Rozran</em></p>
-<p class="date"><em>2023-04-06</em></p>
-</div>
-<div id="introduction" class="section level1 hasAnchor" number="1">
-<h1><span class="header-section-number">1</span> Introduction<a href="index.html#introduction" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>Over the course of the last year, I have developed an algorithm that calculates
-the expected outcome for <a href="#link-to-derivatives">security derivatives</a>. To do
-this, I calculate several probabilities and expected values, then combine them to
-understand if it is worthwhile to purchase a security derivative.</p>
-<p>These probabilities are <a href="#link-to-bootstrap">bootstrapped</a> through the use of a
-<a href="#link-to-mc">Monte Carlo simulation</a>. I am first simulating the price of the
-security on the strike date. I am then able, with this information, to obtain
-the probability the security will be above or below a certain strike and the
-expected value of the security if it does go above (below) the strike for a call
-(put). Combining this with the cost to purchase that derivative, I am able to
-create an expected value for a range of security derivatives.</p>
+<div id="ev" class="section level1 hasAnchor" number="2">
+<h1><span class="header-section-number">2</span> Calculating Expected Value<a href="ev.html#ev" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>The expected value for each security derivative can be calculated as follows:</p>
+<p><span class="math display" id="eq:puts">\[\begin{equation}
+
+  E_p(k) = (P_{ae} * C) + (P_{be} * G)
+  \tag{2.1}
+
+\end{equation}\]</span></p>
+<p><span class="math display" id="eq:calls">\[\begin{equation}
+
+  E_c(k) = (P_{be} * C) + (P_{ae} * G)
+  \tag{2.2}
+
+\end{equation}\]</span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(E_p(k)\)</span> is the expected value of a put at strike price <span class="math inline">\(k\)</span></li>
+<li><span class="math inline">\(E_c(k)\)</span> is the expected value of a call at strike price <span class="math inline">\(k\)</span></li>
+<li><span class="math inline">\(P_{ae}\)</span> is the probability a security price on the strike date is above the
+<em>expected price</em></li>
+<li><span class="math inline">\(P_{be}\)</span> is the probability a security price on the strike date is below the
+<em>expected price</em></li>
+<li><span class="math inline">\(C\)</span> is the cost to but the derivative</li>
+<li><span class="math inline">\(G\)</span> is the expected gain if the derivative is in the money</li>
+</ul>
 
 </div>
             </section>
@@ -131,8 +139,8 @@ create an expected value for a range of security derivatives.</p>
           </div>
         </div>
       </div>
-
-<a href="ev.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="literature.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -163,7 +171,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/rstudio/bookdown-demo/edit/master/index.Rmd",
+"link": "https://github.com/rstudio/bookdown-demo/edit/master/01-expected-value.Rmd",
 "text": "Edit"
 },
 "history": {
