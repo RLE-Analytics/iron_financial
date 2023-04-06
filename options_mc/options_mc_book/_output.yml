@@ -1,0 +1,17 @@
+bookdown::gitbook:
+  css: style.css
+  config:
+    toc:
+      before: |
+        <li><a href="./">Options MC</a></li>
+      after: |
+        <li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
+    edit: https://github.com/RLE-Analytics/iron_financial/edit/main/%s
+    download: ["pdf"]
+bookdown::pdf_book:
+  includes:
+    in_header: preamble.tex
+  latex_engine: xelatex
+  citation_package: natbib
+  keep_tex: yes
+bookdown::epub_book: default

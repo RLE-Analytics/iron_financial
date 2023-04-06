@@ -1,0 +1,186 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{book}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{booktabs}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage[]{natbib}
+\bibliographystyle{plainnat}
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Buying Derivatives - A Monte Carlo Approach},
+  pdfauthor={Jake Rozran},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Buying Derivatives - A Monte Carlo Approach}
+\author{Jake Rozran}
+\date{2023-04-06}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{1}
+\tableofcontents
+}
+\hypertarget{introduction}{%
+\chapter{Introduction}\label{introduction}}
+
+Over the course of the last year, I have developed an algorithm that calculates
+the expected outcome for security\footnote{In finance, a security refers to
+  a tradable financial asset that has monetary value and can be bought or sold in
+  a financial market. Securities include a wide range of assets, such as stocks,
+  bonds, options, futures, and exchange-traded funds (ETFs), among others.}
+derivatives\footnote{A derivative is a financial instrument whose value is derived from
+  the value of an underlying security, such as a stock, bond, commodity, or currency.
+  In other words, the value of a derivative depends on the value of the
+  underlying asset. There are many types of derivatives, including options,
+  futures, forwards, and swaps.For example, an option is a type of
+  derivative that gives the holder the right, but not the obligation, to buy or
+  sell an underlying asset at a specific price within a specified time period.}.
+In this paper, I am specifically
+referring to put options\footnote{A put option is a type of financial contract that
+  gives the holder the right, but not the obligation, to \emph{sell} an underlying
+  security at a predetermined price (known as the strike price) within a specific
+  period of time (known as the strike date).In other words, a put option
+  gives the holder the ability to sell an asset at a certain price, even if the market
+  price of the asset falls below the strike price. This can be useful for
+  investors who believe that the price of an asset is likely to decline, as it
+  allows them to profit from the decline without actually owning the asset.
+  For example, if an investor buys a put option for a certain stock with a strike
+  price of \$50 and an expiration date of one month, and the stock's market price
+  falls to \$40 during that time, the investor can exercise the put option to sell
+  the stock at the higher strike price of \$50, making a profit of \$10 per share.
+  However, if the stock's market price remains above the strike price of
+  \$50, the investor may choose not to exercise the put option and will lose the
+  premium paid to purchase the option.} and call options\footnote{A call option is a type
+  of financial contract that gives the holder the right, but not the obligation,
+  to \emph{buy} an underlying asset, such as a stock, bond, or commodity, at a
+  predetermined price (known as the strike price) within a specific period of
+  time.In other words, a call option gives the holder the ability to
+  purchase an asset at a certain price, even if the market price of the asset
+  rises above the strike price. This can be useful for investors who believe that
+  the price of an asset is likely to increase, as it allows them to profit from
+  the increase without actually owning the asset.For example, if an
+  investor buys a call option for a certain stock with a strike price of \$50 and
+  an expiration date of one month, and the stock's market price rises to \$60
+  during that time, the investor can exercise the call option to buy the stock at
+  the lower strike price of \$50, making a profit of \$10 per share.
+  However, if the stock's market price remains below the strike price of \$50, the
+  investor may choose not to exercise the call option and will lose the premium
+  paid to purchase the option.} when I reference derivatives. To do this, I
+calculate several probabilities\footnote{Probability is a measure of the likelihood or
+  chance that a specific event will occur, expressed as a number between 0 and 1.
+  A probability of 0 means that the event is impossible, while a
+  probability of 1 means that the event is certain to occur. A probability of
+  0.5 (or 50\%) means that the event has an equal chance of occurring or not
+  occurring.} and expected values, then combine them to
+understand if it is worthwhile to purchase a security derivative.
+
+These probabilities are \protect\hyperlink{link-to-bootstrap}{bootstrapped} through the use of a
+\protect\hyperlink{link-to-mc}{Monte Carlo simulation}. I am first simulating the price of the
+security on the strike date. I am then able, with this information, to obtain
+the probability the security will be above or below a certain strike and the
+expected value of the security if it does go above (below) the strike for a call
+(put). Combining this with the cost to purchase that derivative, I am able to
+create an expected value for a range of security derivatives.
+
+\hypertarget{ev}{%
+\chapter{Calculating Expected Value}\label{ev}}
+
+The expected value for each security derivative can be calculated as follows:
+
+\begin{equation} 
+E_p(k) = (P_{ae} * C) + (P_{be} * G)
+\label{eq:puts}
+\end{equation}
+
+\begin{equation} 
+E_c(k) = (P_{be} * C) + (P_{ae} * G)
+\label{eq:calls}
+\end{equation}
+
+where
+
+\begin{itemize}
+\tightlist
+\item
+  \(E_p(k)\) is the expected value of a put at strike price \(k\)
+\item
+  \(E_c(k)\) is the expected value of a call at strike price \(k\)
+\item
+  \(P_{ae}\) is the probability a security price on the strike date is above the
+  \emph{expected price}
+\item
+  \(P_{be}\) is the probability a security price on the strike date is below the
+  \emph{expected price}
+\item
+  \(C\) is the cost to but the derivative
+\item
+  \(G\) is the expected gain if the derivative is in the money
+\end{itemize}
+
+\end{document}

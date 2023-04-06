@@ -1,0 +1,74 @@
+--- 
+title: "Buying Derivatives - A Monte Carlo Approach"
+author: "Jake Rozran"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+# url: your book url like https://bookdown.org/yihui/bookdown
+# cover-image: path to the social sharing image like images/cover.jpg
+description: |
+  This is a strategy for buying puts and calls.
+link-citations: yes
+github-repo: RLE-Analytics/iron_financial
+---
+
+# Introduction
+
+Over the course of the last year, I have developed an algorithm that calculates 
+the expected outcome for security^[In finance, a security refers to 
+a tradable financial asset that has monetary value and can be bought or sold in 
+a financial market. Securities include a wide range of assets, such as stocks, 
+bonds, options, futures, and exchange-traded funds (ETFs), among others.] 
+derivatives^[A derivative is a financial instrument whose value is derived from 
+the value of an underlying security, such as a stock, bond, commodity, or currency. 
+<br><br>In other words, the value of a derivative depends on the value of the 
+underlying asset. There are many types of derivatives, including options, 
+futures, forwards, and swaps.<br><br>For example, an option is a type of 
+derivative that gives the holder the right, but not the obligation, to buy or 
+sell an underlying asset at a specific price within a specified time period.]. 
+In this paper, I am specifically 
+referring to put options^[A put option is a type of financial contract that 
+gives the holder the right, but not the obligation, to _sell_ an underlying 
+security at a predetermined price (known as the strike price) within a specific 
+period of time (known as the strike date).<br><br>In other words, a put option 
+gives the holder the ability to sell an asset at a certain price, even if the market 
+price of the asset falls below the strike price. This can be useful for 
+investors who believe that the price of an asset is likely to decline, as it 
+allows them to profit from the decline without actually owning the asset.<br><br>
+For example, if an investor buys a put option for a certain stock with a strike 
+price of \$50 and an expiration date of one month, and the stock's market price 
+falls to \$40 during that time, the investor can exercise the put option to sell 
+the stock at the higher strike price of \$50, making a profit of \$10 per share. 
+However, if the stock's market price remains above the strike price of 
+\$50, the investor may choose not to exercise the put option and will lose the 
+premium paid to purchase the option.] and call options^[A call option is a type 
+of financial contract that gives the holder the right, but not the obligation, 
+to _buy_ an underlying asset, such as a stock, bond, or commodity, at a 
+predetermined price (known as the strike price) within a specific period of 
+time.<br><br>In other words, a call option gives the holder the ability to 
+purchase an asset at a certain price, even if the market price of the asset 
+rises above the strike price. This can be useful for investors who believe that 
+the price of an asset is likely to increase, as it allows them to profit from 
+the increase without actually owning the asset.<br><br>For example, if an 
+investor buys a call option for a certain stock with a strike price of \$50 and 
+an expiration date of one month, and the stock's market price rises to \$60 
+during that time, the investor can exercise the call option to buy the stock at 
+the lower strike price of \$50, making a profit of \$10 per share.<br><br>
+However, if the stock's market price remains below the strike price of \$50, the 
+investor may choose not to exercise the call option and will lose the premium 
+paid to purchase the option.] when I reference derivatives. To do this, I 
+calculate several probabilities^[Probability is a measure of the likelihood or 
+chance that a specific event will occur, expressed as a number between 0 and 1.
+<br><br>A probability of 0 means that the event is impossible, while a 
+probability of 1 means that the event is certain to occur. A probability of 
+0.5 (or 50%) means that the event has an equal chance of occurring or not 
+occurring.] and expected values, then combine them to 
+understand if it is worthwhile to purchase a security derivative. 
+
+These probabilities are [bootstrapped](#link-to-bootstrap) through the use of a 
+[Monte Carlo simulation](#link-to-mc). I am first simulating the price of the 
+security on the strike date. I am then able, with this information, to obtain 
+the probability the security will be above or below a certain strike and the 
+expected value of the security if it does go above (below) the strike for a call 
+(put). Combining this with the cost to purchase that derivative, I am able to 
+create an expected value for a range of security derivatives. 
