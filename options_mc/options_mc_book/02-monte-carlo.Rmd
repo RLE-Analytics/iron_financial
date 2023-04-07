@@ -1,0 +1,230 @@
+# The Monte Carlo Engine {#mc}
+
+```{python functions}
+#| code-fold: true
+
+import math
+import requests
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta, date
+import pandas as pd
+from scipy.stats import genextreme
+from random import choices
+import plotly.express as px
+
+NUM_SAMPLES = 100000
+SAMPLE_SIZE = 20000
+
+token = pd.read_csv("../tradier.config")
+token = token['prod_token'].iloc[0]
+
+def get_hist_data(symbol, 
+                  token,
+                  start = '2000-01-01', 
+                  end = datetime.today().date().isoformat(),
+                  endpoint = 'https://api.tradier.com',
+                  path = '/v1/markets/history'):
+
+    response = requests.get(f'{endpoint}{path}',
+        params = {'symbol':f'{symbol}', 
+                  'interval': 'daily', 
+                  'start': f'{start}', 
+                  'end': f'{datetime.today().date().isoformat()}'},
+        headers = {'Authorization': f'Bearer {token}', 
+                   'Accept': 'application/json'})
+    json_response = response.json()
+    
+    if type(json_response['history']) != dict:
+        return(-1)
+    
+    hist_price = pd.json_normalize(json_response['history']['day'])
+    hist_price = hist_price.rename(({'date': 'Date',
+                                     'open': 'Open',
+                                     'close': 'Close'}),
+                                    axis = 'columns')
+    hist_price['perc_change'] = ((hist_price['Close'] - hist_price['Open']) / 
+                                    hist_price['Open'])
+                                    
+    return(hist_price)
+
+
+def get_current_price(symbol, 
+                      token,
+                      endpoint = 'https://api.tradier.com',
+                      path = '/v1/markets/quotes'):
+
+    response = requests.get(f'{endpoint}{path}',
+        params = {'symbols': f'{symbol}', 
+                  'greeks': 'false'},
+        headers = {'Authorization': f'Bearer {token}', 
+                   'Accept': 'application/json'})
+    
+    json_response = response.json()
+    price = json_response['quotes']['quote']['last']
+    
+    return(price)
+
+def get_latest_day(stock, current_date = datetime.now()):
+    if current_date.date().weekday() == 5:
+        current_date = current_date.date() - timedelta(days = 1)
+    elif current_date.date().weekday() == 6: 
+        current_date = current_date.date() - timedelta(days = 2)
+    else: 
+        if current_date.hour + (current_date.minute / 60) < 9.5:
+            current_date = current_date.date() - timedelta(days = 3)
+        else:
+            current_date = current_date.date()    
+    
+    return(current_date)
+
+
+def get_simulation(symbol, 
+                   token,
+                   option_date,
+                   num_samples = NUM_SAMPLES,
+                   sample_size = SAMPLE_SIZE, 
+                   upper_scale = 0.60, 
+                   upper_shape = -0.09, 
+                   lower_scale = 0.65, 
+                   lower_shape = -0.1,
+                   today = datetime.utcnow().date()):
+
+    date = {"Date": pd.date_range(datetime.today().date(), option_date)}
+
+    dates = pd.DataFrame(data = date)
+    dates['wday'] = dates['Date'].dt.dayofweek
+    dates = dates.loc[dates['wday'] != 5]
+    dates = dates.loc[dates['wday'] != 6]
+
+    num_trading_days = dates.shape[0]
+    
+    dates = dates.reset_index(drop = True)
+    
+    start = today - timedelta(days = num_trading_days)
+
+    start = start.isoformat()
+    start_date = get_latest_day(symbol, datetime.now() - timedelta(days = 1))
+    
+    hist_price = get_hist_data(symbol, token)
+    if type(hist_price) != pd.core.frame.DataFrame:
+        return(-1)
+    
+    perc_pos = 0.5
+
+    perc_neg = 1 - perc_pos
+
+    avg = np.mean(hist_price['perc_change'])
+    std = np.std(hist_price['perc_change'])
+
+    samp_upper = genextreme.rvs(upper_shape, 
+                                loc = avg, 
+                                scale = upper_scale * std,
+                                size = round(sample_size * perc_pos))
+
+    samp_lower = -1 * genextreme.rvs(lower_shape, 
+                                     loc = avg, 
+                                     scale = lower_scale * std,
+                                     size = round(sample_size * perc_neg))
+
+    samp = np.append(samp_upper, samp_lower)
+
+    sample_col = pd.Series(range(1, num_trading_days + 1)).repeat(num_samples)
+    dates_col = dates['Date'].repeat(num_samples)
+    sample_values = np.array(choices(samp + 1, 
+                                     k = num_samples * num_trading_days
+                                     )).reshape(num_trading_days, 
+                                                num_samples)
+
+    start_price = get_current_price(symbol, token)
+
+    sample_values[0] = start_price
+
+    price_paths = sample_values.cumprod(axis = 0)
+    price_paths = pd.DataFrame(price_paths)
+    price_paths['Date'] = dates['Date']
+    
+    return(price_paths)
+
+
+STOCK = 'AAPL'
+options_selection = (date.today() + timedelta(days = 30)).strftime('%Y-%m-%d')
+start_date = (date.today() - timedelta(days = 90)).strftime('%Y-%m-%d')
+current_price = get_current_price(STOCK, token)
+hist_dat = get_hist_data(STOCK, token, start = start_date)
+price_paths = get_simulation(STOCK, token, options_selection)
+
+```
+
+The plan for this page: 
+
+1. Show the monte carlo graph
+2. Add on a strike - annotate the probability of being in the money and out
+3. Edit strike to be effective price - annotate that
+4. Show histogram and box plot
+5. Show expected value in the money
+
+```{r}
+library(reticulate)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(tidyr)
+
+many_runs <- py$price_paths %>% 
+    pivot_longer(-Date, names_to = "iteration", values_to = "Pred Close") %>% 
+    mutate(sim = TRUE, 
+           Date = as_date(Date))
+
+plot_dat <- py$hist_dat %>% 
+    mutate(sim = FALSE, 
+           iteration = as.character(-1),
+           Date = as_date(Date)) %>% 
+    select(Date, iteration, Close, sim) %>% 
+    bind_rows(many_runs)
+
+many_runs <- NULL
+
+segment_info <- tibble(hist_x = min(plot_dat$Date) + days(15),
+                       hist_xend = min(plot_dat$Date) + days(20),
+                       hist_y = (
+                           plot_dat$Close[plot_dat$Date == min(plot_dat$Date)] * 
+                               1.35),
+                       hist_yend = (
+                           plot_dat$Close[
+                               plot_dat$Date == min(plot_dat$Date)] * 
+                               1.15),
+                       hist_label_y = (
+                           plot_dat$Close[plot_dat$Date == min(plot_dat$Date)] * 
+                               1.37))
+
+ggplot(plot_dat, aes(x = Date, group = iteration)) +
+    geom_line(aes(y = Close), color = "navy") +
+    # geom_line(aes(y = `Pred Close`), color = "red", alpha = 0.05) + 
+    geom_segment(x = segment_info$hist_x[1],
+                 xend = segment_info$hist_xend[1],
+                 y = segment_info$hist_y[1],
+                 yend = segment_info$hist_yend[1],
+                 arrow = arrow()) + 
+    geom_text(label = "Most\nRecent\nPrices", 
+              x = segment_info$hist_x[1],
+              y = segment_info$hist_label_y[1],
+              vjust = 0)
+
+plot_dat <- many_runs %>% 
+    filter(Date == max(Date))
+
+current_price <- many_runs %>% 
+    filter(Date == min(Date) & 
+               iteration == min(iteration)) %>% 
+    pull(`Pred Close`)
+
+ggplot(plot_dat, aes(x = `Pred Close`)) +
+    geom_histogram() + 
+    geom_vline(xintercept = current_price, color = "red")
+
+ggplot(plot_dat, aes(x = `Pred Close`)) +
+    geom_boxplot() + 
+    geom_vline(xintercept = current_price, color = "red")
+```
+
