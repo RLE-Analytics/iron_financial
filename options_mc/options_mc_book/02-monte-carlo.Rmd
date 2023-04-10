@@ -13,7 +13,7 @@ from scipy.stats import genextreme
 from random import choices
 import plotly.express as px
 
-NUM_SAMPLES = 100000
+NUM_SAMPLES = 10000
 SAMPLE_SIZE = 20000
 
 token = pd.read_csv("../tradier.config")
@@ -158,11 +158,7 @@ price_paths = get_simulation(STOCK, token, options_selection)
 
 The plan for this page: 
 
-1. Show the monte carlo graph
-2. Add on a strike - annotate the probability of being in the money and out
-3. Edit strike to be effective price - annotate that
-4. Show histogram and box plot
-5. Show expected value in the money
+1. Show the monte carlo graph - DONE
 
 ```{r}
 library(reticulate)
@@ -176,7 +172,7 @@ many_runs <- py$price_paths %>%
     mutate(sim = TRUE, 
            Date = as_date(Date))
 
-plot_dat <- py$hist_dat %>% 
+mc_plot_dat <- py$hist_dat %>% 
     mutate(sim = FALSE, 
            iteration = as.character(-1),
            Date = as_date(Date)) %>% 
@@ -185,46 +181,111 @@ plot_dat <- py$hist_dat %>%
 
 many_runs <- NULL
 
-segment_info <- tibble(hist_x = min(plot_dat$Date) + days(15),
-                       hist_xend = min(plot_dat$Date) + days(20),
+hist_plot_dat <- mc_plot_dat %>% 
+    filter(Date == max(Date))
+
+current_price <- mc_plot_dat %>% 
+    filter(sim == FALSE) %>% 
+    filter(Date == max(Date)) %>% 
+    pull(Close)
+
+```
+
+
+```{python}
+#| echo: false
+
+del price_paths
+```
+
+```{r}
+#| code-fold: true
+
+segment_info <- tibble(hist_x = min(mc_plot_dat$Date) + days(15),
+                       hist_xend = min(mc_plot_dat$Date) + days(20),
                        hist_y = (
-                           plot_dat$Close[plot_dat$Date == min(plot_dat$Date)] * 
+                           mc_plot_dat$Close[mc_plot_dat$Date == min(mc_plot_dat$Date)] * 
                                1.35),
                        hist_yend = (
-                           plot_dat$Close[
-                               plot_dat$Date == min(plot_dat$Date)] * 
+                           mc_plot_dat$Close[
+                               mc_plot_dat$Date == min(mc_plot_dat$Date)] * 
                                1.15),
                        hist_label_y = (
-                           plot_dat$Close[plot_dat$Date == min(plot_dat$Date)] * 
-                               1.37))
+                           mc_plot_dat$Close[mc_plot_dat$Date == min(mc_plot_dat$Date)] * 
+                               1.37),
+                       pred_x = max(mc_plot_dat$Date) - days(35),
+                       pred_xend = max(mc_plot_dat$Date) - days(20),
+                       pred_y = max(mc_plot_dat$`Pred Close`, na.rm = TRUE) * 0.9,
+                       pred_yend = max(mc_plot_dat$`Pred Close`, na.rm = TRUE) * 0.9,
+                       pred_label_y = max(mc_plot_dat$`Pred Close`, na.rm = TRUE) * 0.9)
 
-ggplot(plot_dat, aes(x = Date, group = iteration)) +
+ggplot(mc_plot_dat, aes(x = Date, group = iteration)) +
     geom_line(aes(y = Close), color = "navy") +
-    # geom_line(aes(y = `Pred Close`), color = "red", alpha = 0.05) + 
+    geom_line(aes(y = `Pred Close`), color = "red", alpha = 0.05) + 
     geom_segment(x = segment_info$hist_x[1],
                  xend = segment_info$hist_xend[1],
                  y = segment_info$hist_y[1],
                  yend = segment_info$hist_yend[1],
                  arrow = arrow()) + 
-    geom_text(label = "Most\nRecent\nPrices", 
+    geom_segment(x = segment_info$pred_x[1],
+                 xend = segment_info$pred_xend[1],
+                 y = segment_info$pred_y[1],
+                 yend = segment_info$pred_yend[1],
+                 arrow = arrow()) +  
+    geom_text(label = "Actual\nCMCSA\nPrices", 
               x = segment_info$hist_x[1],
               y = segment_info$hist_label_y[1],
-              vjust = 0)
-
-plot_dat <- many_runs %>% 
-    filter(Date == max(Date))
-
-current_price <- many_runs %>% 
-    filter(Date == min(Date) & 
-               iteration == min(iteration)) %>% 
-    pull(`Pred Close`)
-
-ggplot(plot_dat, aes(x = `Pred Close`)) +
-    geom_histogram() + 
-    geom_vline(xintercept = current_price, color = "red")
-
-ggplot(plot_dat, aes(x = `Pred Close`)) +
-    geom_boxplot() + 
-    geom_vline(xintercept = current_price, color = "red")
+              vjust = 0) + 
+    geom_text(label = "100,000\nPredicted\nPrices", 
+              x = segment_info$pred_x[1],
+              y = segment_info$pred_label_y[1],
+              hjust = 0)
 ```
+
+## Effective Price and Being In-The-Money
+
+To find the probability that a certain option is in-the-money, we can simply 
+count the number of simulations that finish above (below) the effective price 
+(the strike plus the premium for the option) and divide by the total simulations 
+- this is the beauty of the monte carlo simulations.
+
+### Why do we care about the effective price (instead of just Strike Price)? 
+
+It is not enough to find out if an option will only go above its strike price. 
+You have to pay to own the option... hence, you are already some money into the 
+deal. Since you've already paid some money, you need to make that money back, 
+too, to be in-the-money.
+
+When the strike is in-the-money, the premium to buy the option will be large 
+enough to make the effective price equal to the current price. The more in-the-
+money, the higher the premium. 
+
+When the strike is out-of-the-money, the premium will be smaller. The further 
+out-of-the-money a strike is, the lower the premium. 
+
+```{r}
+#| code-fold: true
+
+ep <- quantile(hist_plot_dat$`Pred Close`, 0.75 + rnorm(1, sd = 0.1))
+
+ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
+    geom_histogram() + 
+    geom_vline(xintercept = current_price, color = "red") + 
+    geom_vline(xintercept = ep, color = "purple") + 
+    geom_text(label = "Current Price", 
+              x = current_price * 0.99, 
+              y = 50, 
+              hjust = 1, 
+              color = "red") + 
+    geom_text(label = "Effective Price", 
+              x = ep * 1.01, 
+              y = 50, 
+              hjust = 0, 
+              color = "purple")
+```
+
+
+4. Show histogram and box plot
+5. Show expected value in the money
+
 

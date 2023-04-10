@@ -519,6 +519,8 @@ and there are `r 2^length(picks$symbol)` outcomes. What is each outcome and
 what is the likelihood of each?
 
 ```{r}
+picks <- read_csv("put_picks_04032023_mixed.csv")
+
 NUM_SAMPLES <- 10000
 NUM_PICKS <- length(picks$symbol)
 
