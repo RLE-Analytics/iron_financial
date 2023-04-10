@@ -242,6 +242,12 @@ ggplot(mc_plot_dat, aes(x = Date, group = iteration)) +
               hjust = 0)
 ```
 
+1. Show that a single price is random
+2. Show the whole monte
+
+3. Show the calculation of being in the money
+4. Show the probability of being in the money
+
 ## Effective Price and Being In-The-Money
 
 To find the probability that a certain option is in-the-money, we can simply 
