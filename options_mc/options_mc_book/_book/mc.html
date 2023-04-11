@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Page not found | Buying Derivatives - A Monte Carlo Approach</title>
+  <title>3 The Monte Carlo Engine | Buying Derivatives - A Monte Carlo Approach</title>
   <meta name="description" content="This is a strategy for buying puts and calls." />
   <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Page not found | Buying Derivatives - A Monte Carlo Approach" />
+  <meta property="og:title" content="3 The Monte Carlo Engine | Buying Derivatives - A Monte Carlo Approach" />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="This is a strategy for buying puts and calls." />
   <meta name="github-repo" content="RLE-Analytics/iron_financial" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Page not found | Buying Derivatives - A Monte Carlo Approach" />
+  <meta name="twitter:title" content="3 The Monte Carlo Engine | Buying Derivatives - A Monte Carlo Approach" />
   
   <meta name="twitter:description" content="This is a strategy for buying puts and calls." />
   
@@ -30,7 +30,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-
+<link rel="prev" href="ev.html"/>
 
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
@@ -107,18 +107,81 @@
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="page-not-found" class="section level1">
-<h1>Page not found</h1>
-<p>The page you requested cannot be found (perhaps it was moved or renamed).</p>
-<p>You may want to try searching to find the page's new location, or use
-the table of contents to find the page you are looking for.</p>
+<div id="mc" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">3</span> The Monte Carlo Engine<a href="mc.html#mc" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="a-quick-reminder-on-what-the-monte-carlo-simulation-does" class="section level2 hasAnchor" number="3.1">
+<h2><span class="header-section-number">3.1</span> A Quick Reminder on what the Monte Carlo Simulation Does<a href="mc.html#a-quick-reminder-on-what-the-monte-carlo-simulation-does" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>There’s a few things to note in a Monte Carlo simulation. In this case, we are
+talking about daily changes in a stock price. More specifically for this
+example, we are talking about daily price changes in Comcast stock (CMCSA).</p>
+<p>The Monte Carlo simulation is randomly picking (loosely from history - but that
+is beyond the depth of understanding needed here) what the percentage change in
+stock price will be for each day until the strike price. It is then repeating
+that simulation of what the stock price will do over and over. The beauty of
+this is that we get, hypothetically, a view of all possible outcomes for the
+stock up to the option’s maturity.</p>
+<div id="one-run-of-the-monte-carlo-siumlation" class="section level3 hasAnchor" number="3.1.1">
+<h3><span class="header-section-number">3.1.1</span> One Run of the Monte Carlo Siumlation<a href="mc.html#one-run-of-the-monte-carlo-siumlation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Show that here</p>
+</div>
+<div id="a-full-monte-carlo-simulation" class="section level3 hasAnchor" number="3.1.2">
+<h3><span class="header-section-number">3.1.2</span> A Full Monte Carlo Simulation<a href="mc.html#a-full-monte-carlo-simulation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Show that here</p>
+<ol style="list-style-type: decimal">
+<li><p>Show that a single price is random</p></li>
+<li><p>Show the whole monte</p></li>
+<li><p>Show the calculation of being in the money</p></li>
+<li><p>Show the probability of being in the money</p></li>
+</ol>
+</div>
+</div>
+<div id="effective-price-and-being-in-the-money" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> Effective Price and Being In-The-Money<a href="mc.html#effective-price-and-being-in-the-money" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>To find the probability that a certain option is in-the-money, we can simply
+count the number of simulations that finish above (below) the effective price
+(the strike plus the premium for the option) and divide by the total simulations
+- this is the beauty of the monte carlo simulations.</p>
+<div id="why-do-we-care-about-the-effective-price-instead-of-just-strike-price" class="section level3 hasAnchor" number="3.2.1">
+<h3><span class="header-section-number">3.2.1</span> Why do we care about the effective price (instead of just Strike Price)?<a href="mc.html#why-do-we-care-about-the-effective-price-instead-of-just-strike-price" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>It is not enough to find out if an option will only go above its strike price.
+You have to pay to own the option… hence, you are already some money into the
+deal. Since you’ve already paid some money, you need to make that money back,
+too, to be in-the-money.</p>
+<p>When the strike is in-the-money, the premium to buy the option will be large
+enough to make the effective price equal to the current price. The more in-the-
+money, the higher the premium.</p>
+<p>When the strike is out-of-the-money, the premium will be smaller. The further
+out-of-the-money a strike is, the lower the premium.</p>
+</div>
+<div id="lets-look-at-an-example." class="section level3 hasAnchor" number="3.2.2">
+<h3><span class="header-section-number">3.2.2</span> Let’s look at an example.<a href="mc.html#lets-look-at-an-example." class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>CMCSA is currently trading at $38.23. Let’s use a call option
+with a strike of $42 that has a premium of $0.05. The effective price of the
+option is <span class="math inline">\(\$42 + \$0.05 = \$42.05\)</span>.</p>
+<p>What is the probability that we meet or exceed that effective price on the
+strike date? To find that out, we count all of the simulations that ended
+with a price greater than or equal to the effective price and divide that by the
+total count of simulations.</p>
+<p>In this case, we have 1,082 simulations that are in-the-money
+out of a total 10,000, or
+10.82% chance that this
+option ends in the money.</p>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="_main_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<ol start="4" style="list-style-type: decimal">
+<li>Show histogram and box plot</li>
+<li>Show expected value in the money</li>
+</ol>
+
+</div>
+</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-
+<a href="ev.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
 
     </div>
   </div>
@@ -150,7 +213,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/RLE-Analytics/iron_financial/edit/main/%s",
+"link": "https://github.com/RLE-Analytics/iron_financial/edit/main/02-monte-carlo.Rmd",
 "text": "Edit"
 },
 "history": {
