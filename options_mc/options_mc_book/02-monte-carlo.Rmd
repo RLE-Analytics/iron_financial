@@ -1,6 +1,6 @@
 # The Monte Carlo Engine {#mc}
 
-```{python functions}
+```{python simulation}
 #| echo: false
 
 import math
@@ -156,32 +156,13 @@ price_paths = get_simulation(STOCK, token, options_selection)
 
 ```
 
-## A Quick Reminder on what the Monte Carlo Simulation Does
-
-There's a few things to note in a Monte Carlo simulation. In this case, we are 
-talking about daily changes in a stock price. More specifically for this 
-example, we are talking about daily price changes in Comcast stock (CMCSA). 
-
-The Monte Carlo simulation is randomly picking (loosely from history - but that 
-is beyond the depth of understanding needed here) what the percentage change in 
-stock price will be for each day until the strike price. It is then repeating 
-that simulation of what the stock price will do over and over. The beauty of 
-this is that we get, hypothetically, a view of all possible outcomes for the 
-stock up to the option's maturity.
-
-### One Run of the Monte Carlo Siumlation
-
-Show that here
-
-### A Full Monte Carlo Simulation
-
-Show that here
-
-```{r}
+```{r create_data}
 #| echo: false
 #| message: false
 #| warning: false
 
+
+### LIBRARIES
 library(reticulate)
 library(dplyr)
 library(ggplot2)
@@ -189,30 +170,90 @@ library(lubridate)
 library(tidyr)
 library(scales)
 
+### DATA CREATION
+
+# DATA SET FOR FULL MC PLOT
 many_runs <- py$price_paths %>% 
     pivot_longer(-Date, names_to = "iteration", values_to = "Pred Close") %>% 
     mutate(sim = TRUE, 
            Date = as_date(Date))
 
-mc_plot_dat <- py$hist_dat %>% 
+mp_plot_dat <- py$hist_dat %>% 
     mutate(sim = FALSE, 
            iteration = as.character(-1),
            Date = as_date(Date)) %>% 
     select(Date, iteration, Close, sim) %>% 
     bind_rows(many_runs)
 
+# DATA SET FOR SINGLE MC PLOT
+single_run <- many_runs %>% 
+    filter(iteration == 1)
+
+sp_plot_data <- py$hist_dat %>% 
+    mutate(sim = FALSE, 
+           iteration = as.character(-1),
+           Date = as_date(Date)) %>% 
+    select(Date, iteration, Close, sim) %>% 
+    bind_rows(single_run)
+
+# JUST GET RID OF A GIANT DATASET
 many_runs <- NULL
 
-hist_plot_dat <- mc_plot_dat %>% 
+# DATA FOR HISTOGRAM AND BOXPLOT
+hist_plot_dat <- mp_plot_dat %>% 
     filter(Date == max(Date))
 
-current_price <- mc_plot_dat %>% 
+# GET LAST PRICE 
+current_price <- mp_plot_dat %>% 
     filter(sim == FALSE) %>% 
     filter(Date == max(Date)) %>% 
     pull(Close)
 
+# A NUMBER USED IN THE WORDS BELOW AND FICTIONAL STRIKE AND COST
 sp <- 42
 ep <- 42 + 0.05
+
+count_above <- length(hist_plot_dat$`Pred Close`[hist_plot_dat$`Pred Close` >= ep])
+```
+
+```{python delete_big_data}
+#| echo: false
+
+# DELETE MORE BIG DATA
+del price_paths
+```
+
+```{r create_plots}
+
+# THE SINGLE RUN PLOT
+
+# THIS IS WHERE I ENDED - NEED TO GET THE LABEL RIGHT
+segment_info <- tibble()
+
+ggplot(sp_plot_data, aes(x = Date)) +
+    geom_line(aes(y = Close), color = "navy") +
+    geom_line(aes(y = `Pred Close`), color = "red") + 
+    scale_y_continuous(labels = dollar_format()) + 
+    geom_segment(x = segment_info$hist_x[1],
+                 xend = segment_info$hist_xend[1],
+                 y = segment_info$hist_y[1],
+                 yend = segment_info$hist_yend[1],
+                 arrow = arrow()) + 
+    geom_segment(x = segment_info$pred_x[1],
+                 xend = segment_info$pred_xend[1],
+                 y = segment_info$pred_y[1],
+                 yend = segment_info$pred_yend[1],
+                 arrow = arrow()) +  
+    geom_text(label = "Actual\nCMCSA\nPrices", 
+              x = segment_info$hist_x[1],
+              y = segment_info$hist_label_y[1],
+              vjust = 0) + 
+    geom_text(label = "Predicted\nPrice\nChange", 
+              x = segment_info$pred_x[1],
+              y = segment_info$pred_label_y[1],
+              hjust = 1)
+
+# THIS IS THE HISTOGRAM
 
 histogram <- ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
     geom_histogram() + 
@@ -228,18 +269,10 @@ histogram <- ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
               y = 50, 
               hjust = 0, 
               color = "purple")
-
-count_above <- length(hist_plot_dat$`Pred Close`[hist_plot_dat$`Pred Close` >= ep])
 ```
 
 
-```{python}
-#| echo: false
-
-del price_paths
-```
-
-```{r}
+```{r full_plot}
 #| echo: false
 #| eval: false
 
@@ -284,11 +317,36 @@ ggplot(mc_plot_dat, aes(x = Date, group = iteration)) +
               hjust = 0)
 ```
 
-1. Show that a single price is random
-2. Show the whole monte
+I am attempting to predict what the price of any stock will be at an options 
+expiration date, some days from now. The Monte Carlo simulation allows me to 
+create probabilities for different scenarios. To say that more precisely, the 
+simulation allows me to know the probability that an option will be in-the-money 
+on its expiration date. 
 
-3. Show the calculation of being in the money
-4. Show the probability of being in the money
+As an example, I will predict what the price of Comcast (CMCSA) will be 30 days 
+from now. 
+
+The simulation is given all of the price change data from CMCSA back to 2000. It 
+calculates the daily price changes. The simulation then randomly picks from the 
+historical pot of price changes what the stock will do tomorrow and tomorrow and 
+tomorrow (and so on, up to the end date 30 days from now). 
+
+INSERT SINGLE PATH GRAPH HERE.
+
+This gets you a single simulated possible path that stock could take for the 
+next 30 days. It is unlikely - probably there is actually 0% chance - that the 
+stock will actually follow that exact random path. Here's the magic of the 
+simulation: I then create 100,000 more random paths using the exact same 
+technique. 
+
+INSERT FULL MC GRAPH HERE.
+
+This full world of simulated price paths allows me to see the distribution of 
+potential prices at the option expiration date. I now know the average, median, 
+high, low, etc. price at the expiration date. 
+
+More beautifully, I can calculate probabilities that a stock price will reach 
+or exceed a strike price at a given options expiration date. 
 
 ## Effective Price and Being In-The-Money
 
