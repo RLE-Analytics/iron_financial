@@ -228,30 +228,42 @@ del price_paths
 # THE SINGLE RUN PLOT
 
 # THIS IS WHERE I ENDED - NEED TO GET THE LABEL RIGHT
-segment_info <- tibble()
+segment_info <- tibble(hist_y = min(sp_plot_data$Close, na.rm = TRUE) - 0.25,
+                       hist_x = sp_plot_data$Date[
+                           !is.na(sp_plot_data$Close) & 
+                               sp_plot_data$Close == min(sp_plot_data$Close, 
+                                                         na.rm = TRUE)],
+                       pred_y = max(sp_plot_data$`Pred Close`, na.rm = TRUE) + 0.25,
+                       pred_x = sp_plot_data$Date[
+                           !is.na(sp_plot_data$`Pred Close`) & 
+                               sp_plot_data$`Pred Close` == max(
+                                   sp_plot_data$`Pred Close`, na.rm = TRUE)],
+                       low_y = min(min(sp_plot_data$`Pred Close`, na.rm = TRUE),
+                                   min(sp_plot_data$Close, na.rm = TRUE)) * 0.95,
+                       high_y = max(max(sp_plot_data$`Pred Close`, na.rm = TRUE),
+                                    max(sp_plot_data$Close, na.rm = TRUE)) * 1.025)
 
 ggplot(sp_plot_data, aes(x = Date)) +
     geom_line(aes(y = Close), color = "navy") +
     geom_line(aes(y = `Pred Close`), color = "red") + 
-    scale_y_continuous(labels = dollar_format()) + 
-    geom_segment(x = segment_info$hist_x[1],
-                 xend = segment_info$hist_xend[1],
-                 y = segment_info$hist_y[1],
-                 yend = segment_info$hist_yend[1],
-                 arrow = arrow()) + 
-    geom_segment(x = segment_info$pred_x[1],
-                 xend = segment_info$pred_xend[1],
-                 y = segment_info$pred_y[1],
-                 yend = segment_info$pred_yend[1],
-                 arrow = arrow()) +  
+    scale_y_continuous(labels = dollar_format(),
+                       limits = c(segment_info$low_y[1],
+                                  segment_info$high_y[1])) + 
+    ggtitle("Single Run of Monte Carlo Simulation") + 
     geom_text(label = "Actual\nCMCSA\nPrices", 
               x = segment_info$hist_x[1],
-              y = segment_info$hist_label_y[1],
-              vjust = 0) + 
+              y = segment_info$hist_y[1],
+              vjust = 1, 
+              color = "navy") + 
     geom_text(label = "Predicted\nPrice\nChange", 
               x = segment_info$pred_x[1],
-              y = segment_info$pred_label_y[1],
-              hjust = 1)
+              y = segment_info$pred_y[1],
+              vjust = 0,
+              color = "red") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major = element_line(color = "light gray"),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank())
 
 # THIS IS THE HISTOGRAM
 
