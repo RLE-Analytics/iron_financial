@@ -224,10 +224,11 @@ del price_paths
 ```
 
 ```{r create_plots}
+#| echo: false
+#| warning: false
 
 # THE SINGLE RUN PLOT
 
-# THIS IS WHERE I ENDED - NEED TO GET THE LABEL RIGHT
 segment_info <- tibble(hist_y = min(sp_plot_data$Close, na.rm = TRUE) - 0.25,
                        hist_x = sp_plot_data$Date[
                            !is.na(sp_plot_data$Close) & 
@@ -237,96 +238,96 @@ segment_info <- tibble(hist_y = min(sp_plot_data$Close, na.rm = TRUE) - 0.25,
                        pred_x = sp_plot_data$Date[
                            !is.na(sp_plot_data$`Pred Close`) & 
                                sp_plot_data$`Pred Close` == max(
-                                   sp_plot_data$`Pred Close`, na.rm = TRUE)],
+                                   sp_plot_data$`Pred Close`, na.rm = TRUE)] - 
+                           days(1),
                        low_y = min(min(sp_plot_data$`Pred Close`, na.rm = TRUE),
                                    min(sp_plot_data$Close, na.rm = TRUE)) * 0.95,
                        high_y = max(max(sp_plot_data$`Pred Close`, na.rm = TRUE),
-                                    max(sp_plot_data$Close, na.rm = TRUE)) * 1.025)
+                                    max(sp_plot_data$Close, na.rm = TRUE)) * 1.05)
 
-ggplot(sp_plot_data, aes(x = Date)) +
+single_run <- ggplot(sp_plot_data, aes(x = Date)) +
     geom_line(aes(y = Close), color = "navy") +
     geom_line(aes(y = `Pred Close`), color = "red") + 
     scale_y_continuous(labels = dollar_format(),
                        limits = c(segment_info$low_y[1],
                                   segment_info$high_y[1])) + 
     ggtitle("Single Run of Monte Carlo Simulation") + 
-    geom_text(label = "Actual\nCMCSA\nPrices", 
-              x = segment_info$hist_x[1],
-              y = segment_info$hist_y[1],
-              vjust = 1, 
-              color = "navy") + 
-    geom_text(label = "Predicted\nPrice\nChange", 
-              x = segment_info$pred_x[1],
-              y = segment_info$pred_y[1],
-              vjust = 0,
-              color = "red") + 
+    annotate("text", 
+             label = "Actual\nCMCSA\nPrices", 
+             x = segment_info$hist_x[1],
+             y = segment_info$hist_y[1],
+             vjust = 1, 
+             color = "navy") + 
+    annotate("text",
+             label = "Predicted\nPrice\nChange", 
+             x = segment_info$pred_x[1],
+             y = segment_info$pred_y[1],
+             vjust = 0,
+             color = "red") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major = element_line(color = "light gray"),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank())
+
+# HERE IS THE PLOT FOR THE FULL MC RUN
+segment_info <- tibble(hist_y = min(mp_plot_dat$Close, na.rm = TRUE) - 0.25,
+                       hist_x = mp_plot_dat$Date[
+                           !is.na(mp_plot_dat$Close) & 
+                               mp_plot_dat$Close == min(mp_plot_dat$Close, 
+                                                         na.rm = TRUE)],
+                       pred_y = mp_plot_dat$Close[
+                           mp_plot_dat$Date == max(mp_plot_dat$Date[
+                               !is.na(mp_plot_dat$Close)])] * 1.1,
+                       pred_x = max(mp_plot_dat$Date[
+                               !is.na(mp_plot_dat$Close)]) - days(5))
+
+full_run <- ggplot(mp_plot_dat, aes(x = Date)) +
+    geom_line(aes(y = Close), color = "navy") +
+    geom_line(aes(y = `Pred Close`, group = iteration), 
+              color = "red", alpha = 0.1) + 
+    scale_y_continuous(labels = dollar_format()) + 
+    ggtitle("Full Monte Carlo Simulation") + 
+    annotate("text", 
+             label = "Actual\nCMCSA\nPrices", 
+             x = segment_info$hist_x[1],
+             y = segment_info$hist_y[1],
+             vjust = 1, 
+             color = "navy") + 
+    annotate("text",
+             label = "10,000\nSimulated\nPrice\nPaths", 
+             x = segment_info$pred_x[1],
+             y = segment_info$pred_y[1],
+             vjust = 0,
+             color = "red") + 
     theme(panel.background = element_blank(),
           panel.grid.major = element_line(color = "light gray"),
           panel.grid.minor = element_blank(),
           axis.ticks = element_blank())
 
 # THIS IS THE HISTOGRAM
-
 histogram <- ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
-    geom_histogram() + 
+    geom_histogram(fill = "navy") + 
     geom_vline(xintercept = current_price, color = "red") + 
     geom_vline(xintercept = ep, color = "purple") + 
-    geom_text(label = paste0("Current Price: ", current_price), 
-              x = current_price * 0.99, 
-              y = 50, 
-              hjust = 1, 
-              color = "red") + 
-    geom_text(label = paste0("Option Effective Price: ", ep), 
-              x = ep * 1.01, 
-              y = 50, 
-              hjust = 0, 
-              color = "purple")
-```
-
-
-```{r full_plot}
-#| echo: false
-#| eval: false
-
-segment_info <- tibble(hist_x = min(mc_plot_dat$Date) + days(15),
-                       hist_xend = min(mc_plot_dat$Date) + days(20),
-                       hist_y = (
-                           mc_plot_dat$Close[mc_plot_dat$Date == min(mc_plot_dat$Date)] * 
-                               1.35),
-                       hist_yend = (
-                           mc_plot_dat$Close[
-                               mc_plot_dat$Date == min(mc_plot_dat$Date)] * 
-                               1.15),
-                       hist_label_y = (
-                           mc_plot_dat$Close[mc_plot_dat$Date == min(mc_plot_dat$Date)] * 
-                               1.37),
-                       pred_x = max(mc_plot_dat$Date) - days(35),
-                       pred_xend = max(mc_plot_dat$Date) - days(20),
-                       pred_y = max(mc_plot_dat$`Pred Close`, na.rm = TRUE) * 0.9,
-                       pred_yend = max(mc_plot_dat$`Pred Close`, na.rm = TRUE) * 0.9,
-                       pred_label_y = max(mc_plot_dat$`Pred Close`, na.rm = TRUE) * 0.9)
-
-ggplot(mc_plot_dat, aes(x = Date, group = iteration)) +
-    geom_line(aes(y = Close), color = "navy") +
-    geom_line(aes(y = `Pred Close`), color = "red", alpha = 0.05) + 
-    geom_segment(x = segment_info$hist_x[1],
-                 xend = segment_info$hist_xend[1],
-                 y = segment_info$hist_y[1],
-                 yend = segment_info$hist_yend[1],
-                 arrow = arrow()) + 
-    geom_segment(x = segment_info$pred_x[1],
-                 xend = segment_info$pred_xend[1],
-                 y = segment_info$pred_y[1],
-                 yend = segment_info$pred_yend[1],
-                 arrow = arrow()) +  
-    geom_text(label = "Actual\nCMCSA\nPrices", 
-              x = segment_info$hist_x[1],
-              y = segment_info$hist_label_y[1],
-              vjust = 0) + 
-    geom_text(label = "100,000\nPredicted\nPrices", 
-              x = segment_info$pred_x[1],
-              y = segment_info$pred_label_y[1],
-              hjust = 0)
+    xlab("Predicted Prices at Option Expiration") + 
+    annotate("text", 
+             label = paste0("Current Price: ", current_price), 
+             x = current_price * 0.99, 
+             y = 50, 
+             hjust = 1, 
+             color = "red") + 
+    annotate("text",
+             label = paste0("Option Effective Price: ", ep), 
+             x = ep * 1.01, 
+             y = 50, 
+             hjust = 0, 
+             color = "purple") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title.y = element_blank())
 ```
 
 I am attempting to predict what the price of any stock will be at an options 
@@ -343,29 +344,44 @@ calculates the daily price changes. The simulation then randomly picks from the
 historical pot of price changes what the stock will do tomorrow and tomorrow and 
 tomorrow (and so on, up to the end date 30 days from now). 
 
-INSERT SINGLE PATH GRAPH HERE.
+```{r print_single}
+#| echo: false
+#| warning: false
+#| fig.align: center
+#| dpi: 600
 
-This gets you a single simulated possible path that stock could take for the 
+print(single_run)
+```
+
+This gets you a single simulated possible path that the stock could take for the 
 next 30 days. It is unlikely - probably there is actually 0% chance - that the 
 stock will actually follow that exact random path. Here's the magic of the 
-simulation: I then create 100,000 more random paths using the exact same 
-technique. 
+simulation: I then create 10,000 to 100,000 more random paths using the exact 
+same technique. 
 
-INSERT FULL MC GRAPH HERE.
+```{r print_full}
+#| echo: false
+#| warning: false
+#| fig.align: center
+#| dpi: 600
+
+print(full_run)
+```
+
 
 This full world of simulated price paths allows me to see the distribution of 
 potential prices at the option expiration date. I now know the average, median, 
 high, low, etc. price at the expiration date. 
 
 More beautifully, I can calculate probabilities that a stock price will reach 
-or exceed a strike price at a given options expiration date. 
+or exceed a strike price at a given options expiration date (more on that below). 
 
 ## Effective Price and Being In-The-Money
 
 To find the probability that a certain option is in-the-money, we can simply 
-count the number of simulations that finish above (below) the effective price 
-(the strike plus the premium for the option) and divide by the total simulations 
-- this is the beauty of the monte carlo simulations.
+count the number of simulations that finish above (or below for a put) the 
+effective price (the strike plus the premium for the option) and divide by the 
+total simulations - this is the beauty of the monte carlo simulations.
 
 ### Why do we care about the effective price (instead of just Strike Price)? 
 
@@ -375,8 +391,8 @@ deal. Since you've already paid some money, you need to make that money back,
 too, to be in-the-money.
 
 When the strike is in-the-money, the premium to buy the option will be large 
-enough to make the effective price equal to the current price. The more in-the-
-money, the higher the premium. 
+enough to make the effective price equal to the current price. The more 
+in-the-money, the higher the premium. 
 
 When the strike is out-of-the-money, the premium will be smaller. The further 
 out-of-the-money a strike is, the lower the premium. 
@@ -385,12 +401,12 @@ out-of-the-money a strike is, the lower the premium.
 
 CMCSA is currently trading at `r dollar(current_price)`. Let's use a call option 
 with a strike of \$42 that has a premium of \$0.05. The effective price of the 
-option is $\$42 + \$0.05 = \$42.05$. 
+option (for a call) is: \$42 + \$0.05 = \$42.05. 
 
 What is the probability that we meet or exceed that effective price on the 
-strike date? To find that out, we count all of the simulations that ended 
-with a price greater than or equal to the effective price and divide that by the 
-total count of simulations. 
+strike date? To find that out, we count the number of all of the simulations 
+that ended with a price greater than or equal to the effective price and divide 
+that by the total count of simulations. 
 
 In this case, we have `r comma(count_above)` simulations that are in-the-money 
 out of a total `r comma(py$NUM_SAMPLES)`, or 
@@ -400,11 +416,16 @@ option ends in the money.
 
 ```{r}
 #| echo: false
+#| warning: false
+#| message: false
+#| fig.align: center
+#| dpi: 600
+
 print(histogram)
 ```
 
 
-4. Show histogram and box plot
-5. Show expected value in the money
+
+NEXT: Show expected value in the money
 
 

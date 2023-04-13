@@ -23,7 +23,7 @@
 <meta name="author" content="Jake Rozran" />
 
 
-<meta name="date" content="2023-04-12" />
+<meta name="date" content="2023-04-13" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -106,33 +106,33 @@
 <h1><span class="header-section-number">3</span> The Monte Carlo Engine<a href="mc.html#mc" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <p>I am attempting to predict what the price of any stock will be at an options
 expiration date, some days from now. The Monte Carlo simulation allows me to
-create probabilities to different scenarios. To say that more precisely, the
-simulation allows me to know the probability that an option will be in-the-
-money on its expiration date.</p>
+create probabilities for different scenarios. To say that more precisely, the
+simulation allows me to know the probability that an option will be in-the-money
+on its expiration date.</p>
 <p>As an example, I will predict what the price of Comcast (CMCSA) will be 30 days
 from now.</p>
 <p>The simulation is given all of the price change data from CMCSA back to 2000. It
 calculates the daily price changes. The simulation then randomly picks from the
 historical pot of price changes what the stock will do tomorrow and tomorrow and
 tomorrow (and so on, up to the end date 30 days from now).</p>
-<p>INSERT SINGLE PATH GRAPH HERE.</p>
-<p>This gets you a single simulated possible path that stock could take for the
+<p><img src="_main_files/figure-html/print_single-1.png" width="4200" style="display: block; margin: auto;" /></p>
+<p>This gets you a single simulated possible path that the stock could take for the
 next 30 days. It is unlikely - probably there is actually 0% chance - that the
 stock will actually follow that exact random path. Here’s the magic of the
-simulation: I then create 100,000 more random paths using the exact same
-technique.</p>
-<p>INSERT FULL MC GRAPH HERE.</p>
+simulation: I then create 10,000 to 100,000 more random paths using the exact
+same technique.</p>
+<p><img src="_main_files/figure-html/print_full-1.png" width="4200" style="display: block; margin: auto;" /></p>
 <p>This full world of simulated price paths allows me to see the distribution of
 potential prices at the option expiration date. I now know the average, median,
 high, low, etc. price at the expiration date.</p>
 <p>More beautifully, I can calculate probabilities that a stock price will reach
-or exceed a strike price at a given options expiration date.</p>
+or exceed a strike price at a given options expiration date (more on that below).</p>
 <div id="effective-price-and-being-in-the-money" class="section level2 hasAnchor" number="3.1">
 <h2><span class="header-section-number">3.1</span> Effective Price and Being In-The-Money<a href="mc.html#effective-price-and-being-in-the-money" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>To find the probability that a certain option is in-the-money, we can simply
-count the number of simulations that finish above (below) the effective price
-(the strike plus the premium for the option) and divide by the total simulations
-- this is the beauty of the monte carlo simulations.</p>
+count the number of simulations that finish above (or below for a put) the
+effective price (the strike plus the premium for the option) and divide by the
+total simulations - this is the beauty of the monte carlo simulations.</p>
 <div id="why-do-we-care-about-the-effective-price-instead-of-just-strike-price" class="section level3 hasAnchor" number="3.1.1">
 <h3><span class="header-section-number">3.1.1</span> Why do we care about the effective price (instead of just Strike Price)?<a href="mc.html#why-do-we-care-about-the-effective-price-instead-of-just-strike-price" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>It is not enough to find out if an option will only go above its strike price.
@@ -140,30 +140,26 @@ You have to pay to own the option… hence, you are already some money into the
 deal. Since you’ve already paid some money, you need to make that money back,
 too, to be in-the-money.</p>
 <p>When the strike is in-the-money, the premium to buy the option will be large
-enough to make the effective price equal to the current price. The more in-the-
-money, the higher the premium.</p>
+enough to make the effective price equal to the current price. The more
+in-the-money, the higher the premium.</p>
 <p>When the strike is out-of-the-money, the premium will be smaller. The further
 out-of-the-money a strike is, the lower the premium.</p>
 </div>
 <div id="lets-look-at-an-example." class="section level3 hasAnchor" number="3.1.2">
 <h3><span class="header-section-number">3.1.2</span> Let’s look at an example.<a href="mc.html#lets-look-at-an-example." class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>CMCSA is currently trading at $38.38. Let’s use a call option
+<p>CMCSA is currently trading at $37.64. Let’s use a call option
 with a strike of $42 that has a premium of $0.05. The effective price of the
-option is <span class="math inline">\(\$42 + \$0.05 = \$42.05\)</span>.</p>
+option (for a call) is: $42 + $0.05 = $42.05.</p>
 <p>What is the probability that we meet or exceed that effective price on the
-strike date? To find that out, we count all of the simulations that ended
-with a price greater than or equal to the effective price and divide that by the
-total count of simulations.</p>
-<p>In this case, we have 1,090 simulations that are in-the-money
+strike date? To find that out, we count the number of all of the simulations
+that ended with a price greater than or equal to the effective price and divide
+that by the total count of simulations.</p>
+<p>In this case, we have 748 simulations that are in-the-money
 out of a total 10,000, or
-10.90% chance that this
+7.48% chance that this
 option ends in the money.</p>
-<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
-<p><img src="_main_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<ol start="4" style="list-style-type: decimal">
-<li>Show histogram and box plot</li>
-<li>Show expected value in the money</li>
-</ol>
+<p><img src="_main_files/figure-html/unnamed-chunk-1-1.png" width="4200" style="display: block; margin: auto;" /></p>
+<p>NEXT: Show expected value in the money</p>
 
 </div>
 </div>
@@ -228,20 +224,6 @@ gitbook.start({
 });
 </script>
 
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    var src = "true";
-    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:")
-      if (/^https?:/.test(src))
-        src = src.replace(/^https?:/, '');
-    script.src = src;
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
 </body>
 
 </html>
