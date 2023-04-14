@@ -11,3 +11,5 @@ a-quick-reminder-on-what-the-monte-carlo-simulation-does
 one-run-of-the-monte-carlo-siumlation
 a-full-monte-carlo-simulation
 what-the-monte-carlo-simulation-does
+expected-stock-price-if-in-the-money
+bringing-it-all-together-expected-value-of-the-option

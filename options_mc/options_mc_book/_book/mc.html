@@ -23,7 +23,7 @@
 <meta name="author" content="Jake Rozran" />
 
 
-<meta name="date" content="2023-04-13" />
+<meta name="date" content="2023-04-14" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -81,6 +81,8 @@
 <li class="chapter" data-level="3.1.1" data-path="mc.html"><a href="mc.html#why-do-we-care-about-the-effective-price-instead-of-just-strike-price"><i class="fa fa-check"></i><b>3.1.1</b> Why do we care about the effective price (instead of just Strike Price)?</a></li>
 <li class="chapter" data-level="3.1.2" data-path="mc.html"><a href="mc.html#lets-look-at-an-example."><i class="fa fa-check"></i><b>3.1.2</b> Let’s look at an example.</a></li>
 </ul></li>
+<li class="chapter" data-level="3.2" data-path="mc.html"><a href="mc.html#expected-stock-price-if-in-the-money"><i class="fa fa-check"></i><b>3.2</b> Expected Stock Price if In-The-Money</a></li>
+<li class="chapter" data-level="3.3" data-path="mc.html"><a href="mc.html#bringing-it-all-together-expected-value-of-the-option"><i class="fa fa-check"></i><b>3.3</b> Bringing it all Together: Expected Value of the Option</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
@@ -147,21 +149,58 @@ out-of-the-money a strike is, the lower the premium.</p>
 </div>
 <div id="lets-look-at-an-example." class="section level3 hasAnchor" number="3.1.2">
 <h3><span class="header-section-number">3.1.2</span> Let’s look at an example.<a href="mc.html#lets-look-at-an-example." class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>CMCSA is currently trading at $37.64. Let’s use a call option
+<p>CMCSA is currently trading at $38.05. Let’s use a call option
 with a strike of $42 that has a premium of $0.05. The effective price of the
 option (for a call) is: $42 + $0.05 = $42.05.</p>
 <p>What is the probability that we meet or exceed that effective price on the
 strike date? To find that out, we count the number of all of the simulations
 that ended with a price greater than or equal to the effective price and divide
 that by the total count of simulations.</p>
-<p>In this case, we have 748 simulations that are in-the-money
+<p>In this case, we have 944 simulations that are in-the-money
 out of a total 10,000, or
-7.48% chance that this
+9.44% chance that this
 option ends in the money.</p>
-<p><img src="_main_files/figure-html/unnamed-chunk-1-1.png" width="4200" style="display: block; margin: auto;" /></p>
-<p>NEXT: Show expected value in the money</p>
-
+<p><img src="_main_files/figure-html/print_histogram-1.png" width="4200" style="display: block; margin: auto;" /></p>
 </div>
+</div>
+<div id="expected-stock-price-if-in-the-money" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> Expected Stock Price if In-The-Money<a href="mc.html#expected-stock-price-if-in-the-money" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Now that I know the probability of it going above the effective price, I need to
+calculate the expected price of the stock if it is in-the-money. To do this, I
+simply take all simulations that end at or above the effective price and
+calculate the expected value (or mean).</p>
+<p><img src="_main_files/figure-html/print_ev-1.png" width="4200" style="display: block; margin: auto;" /></p>
+</div>
+<div id="bringing-it-all-together-expected-value-of-the-option" class="section level2 hasAnchor" number="3.3">
+<h2><span class="header-section-number">3.3</span> Bringing it all Together: Expected Value of the Option<a href="mc.html#bringing-it-all-together-expected-value-of-the-option" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>I have the probability the option will end in-the-money (and by definition the
+probability that the option will end out-of-the-money). I also know the premium
+to buy the option and the expected price of the stock if it is above the
+effective price. I am ready to calculate the expected value of the option.</p>
+<ul>
+<li>It costs $5 to buy the option (100 shares at $0.05 each)</li>
+<li>There is a 9.44% chance
+the option ends in-the-money</li>
+<li>There is a 90.56% chance the option ends
+out-of-the-money</li>
+<li>If the option ends in the money, the stock is expected to be at
+$43.89, which is equivalent to a gain of $43.89 -
+$42.05, or $1.84 (times 100 shares)
+<ul>
+<li>The gain if the option ends in the money is $184.35</li>
+<li>The final gain, minus the $5 to buy the option in the first place, is
+$179.35</li>
+</ul></li>
+<li>Putting all of that together, buying this option is worth
+<strong>$12.40</strong>
+<ul>
+<li>There is a 9% chance you make $179.35</li>
+<li>There is also a 91% chance you just lose your $5 premium</li>
+<li>This expected value is really only possible if you execute this plan
+many many independent times over the long run</li>
+</ul></li>
+</ul>
+
 </div>
 </div>
             </section>

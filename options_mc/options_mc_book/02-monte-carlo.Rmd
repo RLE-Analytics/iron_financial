@@ -310,6 +310,7 @@ histogram <- ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
     geom_vline(xintercept = current_price, color = "red") + 
     geom_vline(xintercept = ep, color = "purple") + 
     xlab("Predicted Prices at Option Expiration") + 
+    scale_x_continuous(labels = dollar_format()) +
     annotate("text", 
              label = paste0("Current Price: ", current_price), 
              x = current_price * 0.99, 
@@ -328,6 +329,36 @@ histogram <- ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
           panel.grid.minor = element_blank(),
           axis.ticks = element_blank(),
           axis.title.y = element_blank())
+
+# THIS IS THE HISTOGRAM
+ev_ <- mean(hist_plot_dat$`Pred Close`[hist_plot_dat$`Pred Close` >= ep])
+
+ev <- ggplot(hist_plot_dat[hist_plot_dat$`Pred Close` >= ep, ], 
+             aes(x = `Pred Close`)) +
+    geom_histogram(fill = "navy") + 
+    geom_vline(xintercept = ep, color = "purple") + 
+    geom_vline(xintercept = ev_, color = "orange") + 
+    xlab("Predicted Prices at Option Expiration\nfor Options Above the Effective Price") + 
+    scale_x_continuous(labels = dollar_format()) +
+    annotate("text",
+             label = paste0("Option Effective Price: ", ep), 
+             x = ep * 1.001, 
+             y = 5, 
+             hjust = 0, 
+             color = "purple") + 
+    annotate("text",
+             label = paste0("Expected Price Above Effective Price: ", dollar(ev_)), 
+             x = ev_ * 1.001, 
+             y = 15, 
+             hjust = 0, 
+             color = "orange") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title.y = element_blank())
+
 ```
 
 I am attempting to predict what the price of any stock will be at an options 
@@ -414,7 +445,7 @@ out of a total `r comma(py$NUM_SAMPLES)`, or
 option ends in the money.
 
 
-```{r}
+```{r print_histogram}
 #| echo: false
 #| warning: false
 #| message: false
@@ -424,8 +455,56 @@ option ends in the money.
 print(histogram)
 ```
 
+## Expected Stock Price if In-The-Money
 
+Now that I know the probability of it going above the effective price, I need to 
+calculate the expected price of the stock if it is in-the-money. To do this, I 
+simply take all simulations that end at or above the effective price and 
+calculate the expected value (or mean).
 
-NEXT: Show expected value in the money
+```{r print_ev}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig.align: center
+#| dpi: 600
 
+print(ev)
+```
 
+## Bringing it all Together: Expected Value of the Option
+
+I have the probability the option will end in-the-money (and by definition the 
+probability that the option will end out-of-the-money). I also know the premium 
+to buy the option and the expected price of the stock if it is above the 
+effective price. I am ready to calculate the expected value of the option. 
+
+```{r final_calc}
+#| echo: false
+
+pae <- count_above / py$NUM_SAMPLES
+pbe <- 1 - (count_above / py$NUM_SAMPLES)
+share_gain <- ev_ - ep
+total_gain <- (ev_ - ep) * 100
+tgwp <- total_gain - 5
+
+final_worth <- (pae * tgwp) + (pbe * -5)
+```
+
+- It costs \$5 to buy the option (100 shares at \$0.05 each)
+- There is a `r percent(pae, accuracy = 0.01)` chance 
+the option ends in-the-money
+- There is a `r percent(pbe, accuracy = 0.01)` chance the option ends 
+out-of-the-money
+- If the option ends in the money, the stock is expected to be at 
+`r dollar(ev_)`, which is equivalent to a gain of `r dollar(ev_)` - 
+`r dollar(ep)`, or `r dollar(share_gain)` (times 100 shares)
+    - The gain if the option ends in the money is `r dollar(total_gain)` 
+    - The final gain, minus the \$5 to buy the option in the first place, is 
+    `r dollar(tgwp)`
+- Putting all of that together, buying this option is worth 
+**`r dollar(final_worth)`**
+    - There is a `r percent(pae)` chance you make `r dollar(tgwp)`
+    - There is also a `r percent(pbe)` chance you just lose your \$5 premium
+    - This expected value is really only possible if you execute this plan 
+    many many independent times over the long run
