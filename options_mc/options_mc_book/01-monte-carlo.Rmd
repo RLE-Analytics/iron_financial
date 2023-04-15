@@ -1,0 +1,510 @@
+# The Monte Carlo Engine {#mc}
+
+```{python simulation}
+#| echo: false
+
+import math
+import requests
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta, date
+import pandas as pd
+from scipy.stats import genextreme
+from random import choices
+import plotly.express as px
+
+NUM_SAMPLES = 10000
+SAMPLE_SIZE = 20000
+
+token = pd.read_csv("../tradier.config")
+token = token['prod_token'].iloc[0]
+
+def get_hist_data(symbol, 
+                  token,
+                  start = '2000-01-01', 
+                  end = datetime.today().date().isoformat(),
+                  endpoint = 'https://api.tradier.com',
+                  path = '/v1/markets/history'):
+
+    response = requests.get(f'{endpoint}{path}',
+        params = {'symbol':f'{symbol}', 
+                  'interval': 'daily', 
+                  'start': f'{start}', 
+                  'end': f'{datetime.today().date().isoformat()}'},
+        headers = {'Authorization': f'Bearer {token}', 
+                   'Accept': 'application/json'})
+    json_response = response.json()
+    
+    if type(json_response['history']) != dict:
+        return(-1)
+    
+    hist_price = pd.json_normalize(json_response['history']['day'])
+    hist_price = hist_price.rename(({'date': 'Date',
+                                     'open': 'Open',
+                                     'close': 'Close'}),
+                                    axis = 'columns')
+    hist_price['perc_change'] = ((hist_price['Close'] - hist_price['Open']) / 
+                                    hist_price['Open'])
+                                    
+    return(hist_price)
+
+
+def get_current_price(symbol, 
+                      token,
+                      endpoint = 'https://api.tradier.com',
+                      path = '/v1/markets/quotes'):
+
+    response = requests.get(f'{endpoint}{path}',
+        params = {'symbols': f'{symbol}', 
+                  'greeks': 'false'},
+        headers = {'Authorization': f'Bearer {token}', 
+                   'Accept': 'application/json'})
+    
+    json_response = response.json()
+    price = json_response['quotes']['quote']['last']
+    
+    return(price)
+
+def get_latest_day(stock, current_date = datetime.now()):
+    if current_date.date().weekday() == 5:
+        current_date = current_date.date() - timedelta(days = 1)
+    elif current_date.date().weekday() == 6: 
+        current_date = current_date.date() - timedelta(days = 2)
+    else: 
+        if current_date.hour + (current_date.minute / 60) < 9.5:
+            current_date = current_date.date() - timedelta(days = 3)
+        else:
+            current_date = current_date.date()    
+    
+    return(current_date)
+
+
+def get_simulation(symbol, 
+                   token,
+                   option_date,
+                   num_samples = NUM_SAMPLES,
+                   sample_size = SAMPLE_SIZE, 
+                   upper_scale = 0.60, 
+                   upper_shape = -0.09, 
+                   lower_scale = 0.65, 
+                   lower_shape = -0.1,
+                   today = datetime.utcnow().date()):
+
+    date = {"Date": pd.date_range(datetime.today().date(), option_date)}
+
+    dates = pd.DataFrame(data = date)
+    dates['wday'] = dates['Date'].dt.dayofweek
+    dates = dates.loc[dates['wday'] != 5]
+    dates = dates.loc[dates['wday'] != 6]
+
+    num_trading_days = dates.shape[0]
+    
+    dates = dates.reset_index(drop = True)
+    
+    start = today - timedelta(days = num_trading_days)
+
+    start = start.isoformat()
+    start_date = get_latest_day(symbol, datetime.now() - timedelta(days = 1))
+    
+    hist_price = get_hist_data(symbol, token)
+    if type(hist_price) != pd.core.frame.DataFrame:
+        return(-1)
+    
+    perc_pos = 0.5
+
+    perc_neg = 1 - perc_pos
+
+    avg = np.mean(hist_price['perc_change'])
+    std = np.std(hist_price['perc_change'])
+
+    samp_upper = genextreme.rvs(upper_shape, 
+                                loc = avg, 
+                                scale = upper_scale * std,
+                                size = round(sample_size * perc_pos))
+
+    samp_lower = -1 * genextreme.rvs(lower_shape, 
+                                     loc = avg, 
+                                     scale = lower_scale * std,
+                                     size = round(sample_size * perc_neg))
+
+    samp = np.append(samp_upper, samp_lower)
+
+    sample_col = pd.Series(range(1, num_trading_days + 1)).repeat(num_samples)
+    dates_col = dates['Date'].repeat(num_samples)
+    sample_values = np.array(choices(samp + 1, 
+                                     k = num_samples * num_trading_days
+                                     )).reshape(num_trading_days, 
+                                                num_samples)
+
+    start_price = get_current_price(symbol, token)
+
+    sample_values[0] = start_price
+
+    price_paths = sample_values.cumprod(axis = 0)
+    price_paths = pd.DataFrame(price_paths)
+    price_paths['Date'] = dates['Date']
+    
+    return(price_paths)
+
+
+STOCK = 'CMCSA'
+options_selection = (date.today() + timedelta(days = 30)).strftime('%Y-%m-%d')
+start_date = (date.today() - timedelta(days = 90)).strftime('%Y-%m-%d')
+current_price = get_current_price(STOCK, token)
+hist_dat = get_hist_data(STOCK, token, start = start_date)
+price_paths = get_simulation(STOCK, token, options_selection)
+
+```
+
+```{r create_data}
+#| echo: false
+#| message: false
+#| warning: false
+
+
+### LIBRARIES
+library(reticulate)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(tidyr)
+library(scales)
+
+### DATA CREATION
+
+# DATA SET FOR FULL MC PLOT
+many_runs <- py$price_paths %>% 
+    pivot_longer(-Date, names_to = "iteration", values_to = "Pred Close") %>% 
+    mutate(sim = TRUE, 
+           Date = as_date(Date))
+
+mp_plot_dat <- py$hist_dat %>% 
+    mutate(sim = FALSE, 
+           iteration = as.character(-1),
+           Date = as_date(Date)) %>% 
+    select(Date, iteration, Close, sim) %>% 
+    bind_rows(many_runs)
+
+# DATA SET FOR SINGLE MC PLOT
+single_run <- many_runs %>% 
+    filter(iteration == 1)
+
+sp_plot_data <- py$hist_dat %>% 
+    mutate(sim = FALSE, 
+           iteration = as.character(-1),
+           Date = as_date(Date)) %>% 
+    select(Date, iteration, Close, sim) %>% 
+    bind_rows(single_run)
+
+# JUST GET RID OF A GIANT DATASET
+many_runs <- NULL
+
+# DATA FOR HISTOGRAM AND BOXPLOT
+hist_plot_dat <- mp_plot_dat %>% 
+    filter(Date == max(Date))
+
+# GET LAST PRICE 
+current_price <- mp_plot_dat %>% 
+    filter(sim == FALSE) %>% 
+    filter(Date == max(Date)) %>% 
+    pull(Close)
+
+# A NUMBER USED IN THE WORDS BELOW AND FICTIONAL STRIKE AND COST
+sp <- 42
+ep <- 42 + 0.05
+
+count_above <- length(hist_plot_dat$`Pred Close`[hist_plot_dat$`Pred Close` >= ep])
+```
+
+```{python delete_big_data}
+#| echo: false
+
+# DELETE MORE BIG DATA
+del price_paths
+```
+
+```{r create_plots}
+#| echo: false
+#| warning: false
+
+# THE SINGLE RUN PLOT
+
+segment_info <- tibble(hist_y = min(sp_plot_data$Close, na.rm = TRUE) - 0.25,
+                       hist_x = sp_plot_data$Date[
+                           !is.na(sp_plot_data$Close) & 
+                               sp_plot_data$Close == min(sp_plot_data$Close, 
+                                                         na.rm = TRUE)],
+                       pred_y = max(sp_plot_data$`Pred Close`, na.rm = TRUE) + 0.25,
+                       pred_x = sp_plot_data$Date[
+                           !is.na(sp_plot_data$`Pred Close`) & 
+                               sp_plot_data$`Pred Close` == max(
+                                   sp_plot_data$`Pred Close`, na.rm = TRUE)] - 
+                           days(1),
+                       low_y = min(min(sp_plot_data$`Pred Close`, na.rm = TRUE),
+                                   min(sp_plot_data$Close, na.rm = TRUE)) * 0.95,
+                       high_y = max(max(sp_plot_data$`Pred Close`, na.rm = TRUE),
+                                    max(sp_plot_data$Close, na.rm = TRUE)) * 1.05)
+
+single_run <- ggplot(sp_plot_data, aes(x = Date)) +
+    geom_line(aes(y = Close), color = "navy") +
+    geom_line(aes(y = `Pred Close`), color = "red") + 
+    scale_y_continuous(labels = dollar_format(),
+                       limits = c(segment_info$low_y[1],
+                                  segment_info$high_y[1])) + 
+    ggtitle("Single Run of Monte Carlo Simulation") + 
+    annotate("text", 
+             label = "Actual\nCMCSA\nPrices", 
+             x = segment_info$hist_x[1],
+             y = segment_info$hist_y[1],
+             vjust = 1, 
+             color = "navy") + 
+    annotate("text",
+             label = "Predicted\nPrice\nChange", 
+             x = segment_info$pred_x[1],
+             y = segment_info$pred_y[1],
+             vjust = 0,
+             color = "red") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major = element_line(color = "light gray"),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank())
+
+# HERE IS THE PLOT FOR THE FULL MC RUN
+segment_info <- tibble(hist_y = min(mp_plot_dat$Close, na.rm = TRUE) - 0.25,
+                       hist_x = mp_plot_dat$Date[
+                           !is.na(mp_plot_dat$Close) & 
+                               mp_plot_dat$Close == min(mp_plot_dat$Close, 
+                                                         na.rm = TRUE)],
+                       pred_y = mp_plot_dat$Close[
+                           mp_plot_dat$Date == max(mp_plot_dat$Date[
+                               !is.na(mp_plot_dat$Close)])] * 1.1,
+                       pred_x = max(mp_plot_dat$Date[
+                               !is.na(mp_plot_dat$Close)]) - days(5))
+
+full_run <- ggplot(mp_plot_dat, aes(x = Date)) +
+    geom_line(aes(y = Close), color = "navy") +
+    geom_line(aes(y = `Pred Close`, group = iteration), 
+              color = "red", alpha = 0.1) + 
+    scale_y_continuous(labels = dollar_format()) + 
+    ggtitle("Full Monte Carlo Simulation") + 
+    annotate("text", 
+             label = "Actual\nCMCSA\nPrices", 
+             x = segment_info$hist_x[1],
+             y = segment_info$hist_y[1],
+             vjust = 1, 
+             color = "navy") + 
+    annotate("text",
+             label = "10,000\nSimulated\nPrice\nPaths", 
+             x = segment_info$pred_x[1],
+             y = segment_info$pred_y[1],
+             vjust = 0,
+             color = "red") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major = element_line(color = "light gray"),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank())
+
+# THIS IS THE HISTOGRAM
+histogram <- ggplot(hist_plot_dat, aes(x = `Pred Close`)) +
+    geom_histogram(fill = "navy") + 
+    geom_vline(xintercept = current_price, color = "red") + 
+    geom_vline(xintercept = ep, color = "purple") + 
+    xlab("Predicted Prices at Option Expiration") + 
+    scale_x_continuous(labels = dollar_format()) +
+    annotate("text", 
+             label = paste0("Current Price: ", current_price), 
+             x = current_price * 0.99, 
+             y = 50, 
+             hjust = 1, 
+             color = "red") + 
+    annotate("text",
+             label = paste0("Option Effective Price: ", ep), 
+             x = ep * 1.01, 
+             y = 50, 
+             hjust = 0, 
+             color = "purple") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title.y = element_blank())
+
+# THIS IS THE HISTOGRAM
+ev_ <- mean(hist_plot_dat$`Pred Close`[hist_plot_dat$`Pred Close` >= ep])
+
+ev <- ggplot(hist_plot_dat[hist_plot_dat$`Pred Close` >= ep, ], 
+             aes(x = `Pred Close`)) +
+    geom_histogram(fill = "navy") + 
+    geom_vline(xintercept = ep, color = "purple") + 
+    geom_vline(xintercept = ev_, color = "orange") + 
+    xlab("Predicted Prices at Option Expiration\nfor Options Above the Effective Price") + 
+    scale_x_continuous(labels = dollar_format()) +
+    annotate("text",
+             label = paste0("Option Effective Price: ", ep), 
+             x = ep * 1.001, 
+             y = 5, 
+             hjust = 0, 
+             color = "purple") + 
+    annotate("text",
+             label = paste0("Expected Price Above Effective Price: ", dollar(ev_)), 
+             x = ev_ * 1.001, 
+             y = 15, 
+             hjust = 0, 
+             color = "orange") + 
+    theme(panel.background = element_blank(),
+          panel.grid.major.y = element_line(color = "light gray"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title.y = element_blank())
+
+```
+
+I am attempting to predict what the price of any stock will be at an options 
+expiration date, some days from now. The Monte Carlo simulation allows me to 
+create probabilities for different scenarios. To say that more precisely, the 
+simulation allows me to know the probability that an option will be in-the-money 
+on its expiration date. 
+
+As an example, I will predict what the price of Comcast (CMCSA) will be 30 days 
+from now. 
+
+The simulation is given all of the price change data from CMCSA back to 2000. It 
+calculates the daily price changes. The simulation then randomly picks from the 
+historical pot of price changes what the stock will do tomorrow and tomorrow and 
+tomorrow (and so on, up to the end date 30 days from now). 
+
+```{r print_single}
+#| echo: false
+#| warning: false
+#| fig.align: center
+#| dpi: 600
+
+print(single_run)
+```
+
+This gets you a single simulated possible path that the stock could take for the 
+next 30 days. It is unlikely - probably there is actually 0% chance - that the 
+stock will actually follow that exact random path. Here's the magic of the 
+simulation: I then create 10,000 to 100,000 more random paths using the exact 
+same technique. 
+
+```{r print_full}
+#| echo: false
+#| warning: false
+#| fig.align: center
+#| dpi: 600
+
+print(full_run)
+```
+
+
+This full world of simulated price paths allows me to see the distribution of 
+potential prices at the option expiration date. I now know the average, median, 
+high, low, etc. price at the expiration date. 
+
+More beautifully, I can calculate probabilities that a stock price will reach 
+or exceed a strike price at a given options expiration date (more on that below). 
+
+## Effective Price and Being In-The-Money
+
+To find the probability that a certain option is in-the-money, we can simply 
+count the number of simulations that finish above (or below for a put) the 
+effective price (the strike plus the premium for the option) and divide by the 
+total simulations - this is the beauty of the monte carlo simulations.
+
+### Why do we care about the effective price (instead of just Strike Price)? 
+
+It is not enough to find out if an option will only go above its strike price. 
+You have to pay to own the option... hence, you are already some money into the 
+deal. Since you've already paid some money, you need to make that money back, 
+too, to be in-the-money.
+
+When the strike is in-the-money, the premium to buy the option will be large 
+enough to make the effective price equal to the current price. The more 
+in-the-money, the higher the premium. 
+
+When the strike is out-of-the-money, the premium will be smaller. The further 
+out-of-the-money a strike is, the lower the premium. 
+
+### Let's look at an example.
+
+CMCSA is currently trading at `r dollar(current_price)`. Let's use a call option 
+with a strike of \$42 that has a premium of \$0.05. The effective price of the 
+option (for a call) is: \$42 + \$0.05 = \$42.05. 
+
+What is the probability that we meet or exceed that effective price on the 
+strike date? To find that out, we count the number of all of the simulations 
+that ended with a price greater than or equal to the effective price and divide 
+that by the total count of simulations. 
+
+In this case, we have `r comma(count_above)` simulations that are in-the-money 
+out of a total `r comma(py$NUM_SAMPLES)`, or 
+`r percent(count_above / py$NUM_SAMPLES, accuracy = 0.01)` chance that this 
+option ends in the money.
+
+
+```{r print_histogram}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig.align: center
+#| dpi: 600
+
+print(histogram)
+```
+
+## Expected Stock Price if In-The-Money
+
+Now that I know the probability of it going above the effective price, I need to 
+calculate the expected price of the stock if it is in-the-money. To do this, I 
+simply take all simulations that end at or above the effective price and 
+calculate the expected value (or mean).
+
+```{r print_ev}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig.align: center
+#| dpi: 600
+
+print(ev)
+```
+
+## Bringing it all Together: Expected Value of the Option
+
+I have the probability the option will end in-the-money (and by definition the 
+probability that the option will end out-of-the-money). I also know the premium 
+to buy the option and the expected price of the stock if it is above the 
+effective price. I am ready to calculate the expected value of the option. 
+
+```{r final_calc}
+#| echo: false
+
+pae <- count_above / py$NUM_SAMPLES
+pbe <- 1 - (count_above / py$NUM_SAMPLES)
+share_gain <- ev_ - ep
+total_gain <- (ev_ - ep) * 100
+tgwp <- total_gain - 5
+
+final_worth <- (pae * tgwp) + (pbe * -5)
+```
+
+- It costs \$5 to buy the option (100 shares at \$0.05 each)
+- There is a `r percent(pae, accuracy = 0.01)` chance 
+the option ends in-the-money
+- There is a `r percent(pbe, accuracy = 0.01)` chance the option ends 
+out-of-the-money
+- If the option ends in the money, the stock is expected to be at 
+`r dollar(ev_)`, which is equivalent to a gain of `r dollar(ev_)` - 
+`r dollar(ep)`, or `r dollar(share_gain)` (times 100 shares)
+    - The gain if the option ends in the money is `r dollar(total_gain)` 
+    - The final gain, minus the \$5 to buy the option in the first place, is 
+    `r dollar(tgwp)`
+- Putting all of that together, buying this option is worth 
+**`r dollar(final_worth)`**
+    - There is a `r percent(pae)` chance you make `r dollar(tgwp)`
+    - There is also a `r percent(pbe)` chance you just lose your \$5 premium
+    - This expected value is really only possible if you execute this plan 
+    many many independent times over the long run

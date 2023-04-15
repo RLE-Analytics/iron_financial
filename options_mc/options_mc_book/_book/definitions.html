@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>A Definitions | Buying Derivatives - A Monte Carlo Approach</title>
+  <meta name="description" content="This is a strategy for buying puts and calls." />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="A Definitions | Buying Derivatives - A Monte Carlo Approach" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This is a strategy for buying puts and calls." />
+  <meta name="github-repo" content="RLE-Analytics/iron_financial" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="A Definitions | Buying Derivatives - A Monte Carlo Approach" />
+  
+  <meta name="twitter:description" content="This is a strategy for buying puts and calls." />
+  
+
+<meta name="author" content="Jake Rozran" />
+
+
+<meta name="date" content="2023-04-15" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="evaluating-the-portfolio.html"/>
+<link rel="next" href="calculating-an-options-expected-value.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Options MC</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> url: your book url like https://bookdown.org/yihui/bookdown</a></li>
+<li class="chapter" data-level="2" data-path="mc.html"><a href="mc.html"><i class="fa fa-check"></i><b>2</b> The Monte Carlo Engine</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="mc.html"><a href="mc.html#effective-price-and-being-in-the-money"><i class="fa fa-check"></i><b>2.1</b> Effective Price and Being In-The-Money</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="mc.html"><a href="mc.html#why-do-we-care-about-the-effective-price-instead-of-just-strike-price"><i class="fa fa-check"></i><b>2.1.1</b> Why do we care about the effective price (instead of just Strike Price)?</a></li>
+<li class="chapter" data-level="2.1.2" data-path="mc.html"><a href="mc.html#lets-look-at-an-example."><i class="fa fa-check"></i><b>2.1.2</b> Let’s look at an example.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="mc.html"><a href="mc.html#expected-stock-price-if-in-the-money"><i class="fa fa-check"></i><b>2.2</b> Expected Stock Price if In-The-Money</a></li>
+<li class="chapter" data-level="2.3" data-path="mc.html"><a href="mc.html#bringing-it-all-together-expected-value-of-the-option"><i class="fa fa-check"></i><b>2.3</b> Bringing it all Together: Expected Value of the Option</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="evaluating-the-portfolio.html"><a href="evaluating-the-portfolio.html"><i class="fa fa-check"></i><b>3</b> Evaluating the Portfolio</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="definitions.html"><a href="definitions.html"><i class="fa fa-check"></i><b>A</b> Definitions</a></li>
+<li class="chapter" data-level="B" data-path="calculating-an-options-expected-value.html"><a href="calculating-an-options-expected-value.html"><i class="fa fa-check"></i><b>B</b> Calculating an Option’s Expected Value</a></li>
+<li class="divider"></li>
+<li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Buying Derivatives - A Monte Carlo Approach</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="definitions" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">A</span> Definitions<a href="definitions.html#definitions" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<ol style="list-style-type: decimal">
+<li><p>In finance, a security refers to a tradable financial asset that has monetary
+value and can be bought or sold in a financial market. Securities include a wide
+range of assets, such as stocks, bonds, options, futures, and exchange-traded
+funds (ETFs), among others.<a href="#intro">↩︎</a></p></li>
+<li><p>A derivative is a financial instrument whose value is derived from the value
+of an underlying security, such as a stock, bond, commodity, or currency.<br>
+<br>In other words, the value of a derivative depends on the value of the underlying
+asset. There are many types of derivatives, including options, futures,
+forwards, and swaps.<br><br>For example, an option is a type of derivative that
+gives the holder the right, but not the obligation, to buy or sell an underlying
+asset at a specific price within a specified time period.<a href="#intro">↩︎</a></p></li>
+<li><p>A put option is a type of financial contract that gives the holder the right,
+but not the obligation, to sell an underlying security at a predetermined price
+(known as the strike price) within a specific period of time (known as the
+strike date).<br><br>In other words, a put option gives the holder the ability
+to sell an asset at a certain price, even if the market price of the asset falls
+below the strike price. This can be useful for investors who believe that the
+price of an asset is likely to decline, as it allows them to profit from the
+decline without actually owning the asset.<br><br>For example, if an investor
+buys a put option for a certain stock with a strike price of $50 and an
+expiration date of one month, and the stock’s market price falls to $40 during
+that time, the investor can exercise the put option to sell the stock at the
+higher strike price of $50, making a profit of $10 per share. However, if the
+stock’s market price remains above the strike price of $50, the investor may
+choose not to exercise the put option and will lose the premium paid to purchase
+the option.<a href="#intro">↩︎</a></p></li>
+<li><p>A call option is a type of financial contract that gives the holder the
+right, but not the obligation, to buy an underlying asset, such as a stock,
+bond, or commodity, at a predetermined price (known as the strike price) within
+a specific period of time.<br><br>In other words, a call option gives the holder
+the ability to purchase an asset at a certain price, even if the market price of
+the asset rises above the strike price. This can be useful for investors who
+believe that the price of an asset is likely to increase, as it allows them to
+profit from the increase without actually owning the asset.<br><br>For example,
+if an investor buys a call option for a certain stock with a strike price of
+$50 and an expiration date of one month, and the stock’s market price rises to
+$60 during that time, the investor can exercise the call option to buy the
+stock at the lower strike price of $50, making a profit of $10 per share.<br>
+<br>However, if the stock’s market price remains below the strike price of $50,
+the investor may choose not to exercise the call option and will lose the
+premium paid to purchase the option.<a href="#intro">↩︎</a></p></li>
+<li><p>Probability is a measure of the likelihood or chance that a specific event
+will occur, expressed as a number between 0 and 1.<br><br>A probability of 0
+means that the event is impossible, while a probability of 1 means that the
+event is certain to occur. A probability of 0.5 (or 50%) means that the event
+has an equal chance of occurring or not occurring.<a href="#intro">↩︎</a></p></li>
+<li><p>Expected value is a concept used in statistics to calculate the long-term
+average value of a random variable, taking into account the probability of each
+possible outcome.<br><br>The expected value is calculated by multiplying each
+possible outcome by its probability and adding up all the products. In other
+words, it is the weighted average of all possible outcomes.<a href="#intro">↩︎</a></p></li>
+<li><p>A bootstrap sample is a sample of data that is created by randomly selecting
+observations with replacement from a larger data set. The term “bootstrap” comes
+from the idea of pulling oneself up by one’s bootstraps, as the bootstrap method
+allows us to estimate the properties of a population by repeatedly resampling
+from a smaller sample.<br><br>To create a bootstrap sample, we start by randomly
+selecting an observation from the original data set and adding it to the new
+sample. We then put the observation back in the original data set and repeat
+this process, selecting a new observation with replacement each time, until we
+have a sample of the desired size. By selecting with replacement, some
+observations may be selected more than once, while others may not be selected at
+all.<br><br>Bootstrap sampling is commonly used in statistics to estimate the
+sampling distribution of a statistic, such as the mean or variance, when the
+underlying population distribution is unknown or difficult to model. By
+repeatedly resampling from the available data, we can generate many different
+bootstrap samples and use them to estimate the variability and uncertainty of
+the statistic of interest.<a href="#intro">↩︎</a></p></li>
+<li><p>A Monte Carlo simulation is a computational method used to estimate the
+probability distribution of an outcome by generating a large number of random
+samples or scenarios and analyzing their aggregate behavior.<a href="#intro">↩︎</a></p></li>
+</ol>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="evaluating-the-portfolio.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="calculating-an-options-expected-value.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/RLE-Analytics/iron_financial/edit/main/03-appendix.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

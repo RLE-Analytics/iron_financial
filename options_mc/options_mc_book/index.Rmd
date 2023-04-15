@@ -12,89 +12,20 @@ link-citations: yes
 github-repo: RLE-Analytics/iron_financial
 ---
 
-# Introduction
+# Introduction {#intro}
 
 Over the course of the last year, I have developed an algorithm that calculates 
-the expected outcome for security^[In finance, a security refers to 
-a tradable financial asset that has monetary value and can be bought or sold in 
-a financial market. Securities include a wide range of assets, such as stocks, 
-bonds, options, futures, and exchange-traded funds (ETFs), among others.] 
-derivatives^[A derivative is a financial instrument whose value is derived from 
-the value of an underlying security, such as a stock, bond, commodity, or currency. 
-<br><br>In other words, the value of a derivative depends on the value of the 
-underlying asset. There are many types of derivatives, including options, 
-futures, forwards, and swaps.<br><br>For example, an option is a type of 
-derivative that gives the holder the right, but not the obligation, to buy or 
-sell an underlying asset at a specific price within a specified time period.]. 
-In this paper, I am specifically 
-referring to put options^[A put option is a type of financial contract that 
-gives the holder the right, but not the obligation, to _sell_ an underlying 
-security at a predetermined price (known as the strike price) within a specific 
-period of time (known as the strike date).<br><br>In other words, a put option 
-gives the holder the ability to sell an asset at a certain price, even if the market 
-price of the asset falls below the strike price. This can be useful for 
-investors who believe that the price of an asset is likely to decline, as it 
-allows them to profit from the decline without actually owning the asset.<br><br>
-For example, if an investor buys a put option for a certain stock with a strike 
-price of \$50 and an expiration date of one month, and the stock's market price 
-falls to \$40 during that time, the investor can exercise the put option to sell 
-the stock at the higher strike price of \$50, making a profit of \$10 per share. 
-However, if the stock's market price remains above the strike price of 
-\$50, the investor may choose not to exercise the put option and will lose the 
-premium paid to purchase the option.] and call options^[A call option is a type 
-of financial contract that gives the holder the right, but not the obligation, 
-to _buy_ an underlying asset, such as a stock, bond, or commodity, at a 
-predetermined price (known as the strike price) within a specific period of 
-time.<br><br>In other words, a call option gives the holder the ability to 
-purchase an asset at a certain price, even if the market price of the asset 
-rises above the strike price. This can be useful for investors who believe that 
-the price of an asset is likely to increase, as it allows them to profit from 
-the increase without actually owning the asset.<br><br>For example, if an 
-investor buys a call option for a certain stock with a strike price of \$50 and 
-an expiration date of one month, and the stock's market price rises to \$60 
-during that time, the investor can exercise the call option to buy the stock at 
-the lower strike price of \$50, making a profit of \$10 per share.<br><br>
-However, if the stock's market price remains below the strike price of \$50, the 
-investor may choose not to exercise the call option and will lose the premium 
-paid to purchase the option.] on stocks when I reference security derivatives. 
-To do this, I 
-calculate several probabilities^[Probability is a measure of the likelihood or 
-chance that a specific event will occur, expressed as a number between 0 and 1.
-<br><br>A probability of 0 means that the event is impossible, while a 
-probability of 1 means that the event is certain to occur. A probability of 
-0.5 (or 50%) means that the event has an equal chance of occurring or not 
-occurring.] and find the expected gain or cost, then combine them to calculate 
-the expected value^[Expected value is a concept used in statistics 
-to calculate the long-term average value of a random variable, taking into 
-account the probability of each possible outcome.<br><br>The expected value is 
-calculated by multiplying each possible outcome by its probability and adding up 
-all the products. In other words, it is the weighted average of all possible 
-outcomes.] and understand if it is worthwhile to purchase. 
+the expected outcome for security^[1](#def)^ derivatives^[2](#def)^. In this 
+paper, I am specifically referring to put options^[3](#def)^ and call 
+options^[4](#def)^ on stocks when I reference security derivatives. To do this, 
+I calculate several probabilities^[4](#def)^ and find the expected gain or cost, 
+then combine them to calculate the expected value^[5](#def)^ and understand if 
+it is worthwhile to purchase. 
 
-These probabilities are bootstrapped^[A bootstrap sample is a sample of data 
-that is created by randomly selecting observations with replacement from a 
-larger data set. The term "bootstrap" comes from the idea of pulling oneself up 
-by one's bootstraps, as the bootstrap method allows us to estimate the 
-properties of a population by repeatedly resampling from a smaller sample.
-<br><br>To create a bootstrap sample, we start by randomly selecting an 
-observation from the original data set and adding it to the new sample. We then 
-put the observation back in the original data set and repeat this process, 
-selecting a new observation with replacement each time, until we have a sample 
-of the desired size. By selecting with replacement, some observations may be 
-selected more than once, while others may not be selected at all.<br><br>
-Bootstrap sampling is commonly used in statistics to estimate the sampling 
-distribution of a statistic, such as the mean or variance, when the underlying 
-population distribution is unknown or difficult to model. By repeatedly 
-resampling from the available data, we can generate many different bootstrap 
-samples and use them to estimate the variability and uncertainty of the 
-statistic of interest.] through the use of a Monte Carlo simulation^[A Monte 
-Carlo simulation is a computational method used to estimate the probability 
-distribution of an outcome by generating a large number of random samples or 
-scenarios and analyzing their aggregate behavior.]. 
+These probabilities are bootstrapped^[6](#def)^ through the use of a Monte Carlo 
+simulation^[7](#def)^. 
 
-I am first simulating the distribution of the price of the security on the 
-strike date using the Monte Carlo simulation. I am then able, with this 
-information, to obtain the probability the security will be above (below) a 
-certain strike and the expected value of the security if it does go above 
-(below) the strike for a call (put). Combining this with the cost to purchase 
-that derivative, I am able to create an expected value for a range of options.
+Finally, I am using this simulation across a variety of stocks to understand 
+which options for which stock have the highest expected values. With the details 
+from the Monte Carlo simulation, however, there are a number of different values 
+created that can be used to create a winning strategy. 

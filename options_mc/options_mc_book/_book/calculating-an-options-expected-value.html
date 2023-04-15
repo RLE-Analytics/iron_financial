@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>B Calculating an Option’s Expected Value | Buying Derivatives - A Monte Carlo Approach</title>
+  <meta name="description" content="This is a strategy for buying puts and calls." />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="B Calculating an Option’s Expected Value | Buying Derivatives - A Monte Carlo Approach" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This is a strategy for buying puts and calls." />
+  <meta name="github-repo" content="RLE-Analytics/iron_financial" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="B Calculating an Option’s Expected Value | Buying Derivatives - A Monte Carlo Approach" />
+  
+  <meta name="twitter:description" content="This is a strategy for buying puts and calls." />
+  
+
+<meta name="author" content="Jake Rozran" />
+
+
+<meta name="date" content="2023-04-15" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="def.html"/>
+
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Options MC</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
+<li class="chapter" data-level="2" data-path="mc.html"><a href="mc.html"><i class="fa fa-check"></i><b>2</b> The Monte Carlo Engine</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="mc.html"><a href="mc.html#effective-price-and-being-in-the-money"><i class="fa fa-check"></i><b>2.1</b> Effective Price and Being In-The-Money</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="mc.html"><a href="mc.html#why-do-we-care-about-the-effective-price-instead-of-just-strike-price"><i class="fa fa-check"></i><b>2.1.1</b> Why do we care about the effective price (instead of just Strike Price)?</a></li>
+<li class="chapter" data-level="2.1.2" data-path="mc.html"><a href="mc.html#lets-look-at-an-example."><i class="fa fa-check"></i><b>2.1.2</b> Let’s look at an example.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="mc.html"><a href="mc.html#expected-stock-price-if-in-the-money"><i class="fa fa-check"></i><b>2.2</b> Expected Stock Price if In-The-Money</a></li>
+<li class="chapter" data-level="2.3" data-path="mc.html"><a href="mc.html#bringing-it-all-together-expected-value-of-the-option"><i class="fa fa-check"></i><b>2.3</b> Bringing it all Together: Expected Value of the Option</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="evaluating-the-portfolio.html"><a href="evaluating-the-portfolio.html"><i class="fa fa-check"></i><b>3</b> Evaluating the Portfolio</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="def.html"><a href="def.html"><i class="fa fa-check"></i><b>A</b> Definitions</a></li>
+<li class="chapter" data-level="B" data-path="calculating-an-options-expected-value.html"><a href="calculating-an-options-expected-value.html"><i class="fa fa-check"></i><b>B</b> Calculating an Option’s Expected Value</a></li>
+<li class="divider"></li>
+<li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Buying Derivatives - A Monte Carlo Approach</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="calculating-an-options-expected-value" class="section level1 hasAnchor" number="5">
+<h1><span class="header-section-number">B</span> Calculating an Option’s Expected Value<a href="calculating-an-options-expected-value.html#calculating-an-options-expected-value" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>The expected value for each option can be calculated as follows:</p>
+<p><span class="math display" id="eq:puts">\[\begin{equation}
+E_p(k) = (P_{ae} * C) + (P_{be} * G)
+\tag{B.1}
+\end{equation}\]</span></p>
+<p><span class="math display" id="eq:calls">\[\begin{equation}
+E_c(k) = (P_{be} * C) + (P_{ae} * G)
+\tag{B.2}
+\end{equation}\]</span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(E_p(k)\)</span> is the expected value of a put at strike price <span class="math inline">\(k\)</span></li>
+<li><span class="math inline">\(E_c(k)\)</span> is the expected value of a call at strike price <span class="math inline">\(k\)</span></li>
+<li><span class="math inline">\(P_{ae}\)</span> is the probability a security price on the strike date is above the
+<em>effective price</em><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, <span class="math inline">\(k_e\)</span>
+<ul>
+<li>This is calculated with the Monte Carlo simulation</li>
+<li><span class="math inline">\(P_{ae} = \frac{r_{ae}}{r_t}\)</span> where <span class="math inline">\(r_{ae}\)</span> is the number of runs above
+the expected price and <span class="math inline">\(r_t\)</span> are the total runs</li>
+</ul></li>
+<li><span class="math inline">\(P_{be}\)</span> = 1 - <span class="math inline">\(P_{ae}\)</span> is the probability a security price on the strike date
+is below the <em>effective price</em>, <span class="math inline">\(k_e\)</span></li>
+<li><span class="math inline">\(C = 100c\)</span> is the cost to buy the option
+<ul>
+<li><span class="math inline">\(c\)</span> is the cost of a single option (options are typically bought/sold in
+lots of 100)</li>
+</ul></li>
+<li><span class="math inline">\(G = 100(E_{p_s}(p_s|p_s&gt;k_e) - c)\)</span> is the expected gain if the derivative
+is in the money
+<ul>
+<li><span class="math inline">\(E_{p_s}(p_s|p_s&gt;k_e)\)</span> is the expected value of the of the price of the
+stock, <span class="math inline">\(p_s\)</span>, given that the price of the stock has exceeded the effective
+price, <span class="math inline">\(k_e\)</span> (for calls).</li>
+</ul></li>
+</ul>
+
+</div>
+
+
+
+
+
+
+
+
+<div class="footnotes">
+<hr />
+<ol start="1">
+<li id="fn1"><p>The effective price is the strike price plus the option cost
+(for calls) - you cannot make money on the option until you cross this
+threshold<a href="calculating-an-options-expected-value.html#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="def.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/RLE-Analytics/iron_financial/edit/main/03-appendix.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
