@@ -23,7 +23,7 @@
 <meta name="author" content="Jake Rozran" />
 
 
-<meta name="date" content="2023-04-15" />
+<meta name="date" content="2023-04-16" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -159,9 +159,9 @@ option (for a call) is: $42 + $0.05 = $42.05.</p>
 strike date? To find that out, we count the number of all of the simulations
 that ended with a price greater than or equal to the effective price and divide
 that by the total count of simulations.</p>
-<p>In this case, we have 755 simulations that are in-the-money
+<p>In this case, we have 974 simulations that are in-the-money
 out of a total 10,000, or
-7.55% chance that this
+9.74% chance that this
 option ends in the money.</p>
 <p><img src="_main_files/figure-html/print_histogram-1.png" width="4200" style="display: block; margin: auto;" /></p>
 </div>
@@ -182,23 +182,23 @@ to buy the option and the expected price of the stock if it is above the
 effective price. I am ready to calculate the expected value of the option.</p>
 <ul>
 <li>It costs $5 to buy the option (100 shares at $0.05 each)</li>
-<li>There is a 7.55% chance
+<li>There is a 9.74% chance
 the option ends in-the-money</li>
-<li>There is a 92.45% chance the option ends
+<li>There is a 90.26% chance the option ends
 out-of-the-money</li>
 <li>If the option ends in the money, the stock is expected to be at
-$43.74, which is equivalent to a gain of $43.74 -
-$42.05, or $1.69 (times 100 shares)
+$43.92, which is equivalent to a gain of $43.92 -
+$42.05, or $1.87 (times 100 shares)
 <ul>
-<li>The gain if the option ends in the money is $169.07</li>
+<li>The gain if the option ends in the money is $186.57</li>
 <li>The final gain, minus the $5 to buy the option in the first place, is
-$164.07</li>
+$181.57</li>
 </ul></li>
 <li>Putting all of that together, buying this option is worth
-<strong>$7.76</strong>
+<strong>$13.17</strong>
 <ul>
-<li>There is a 8% chance you make $164.07</li>
-<li>There is also a 92% chance you just lose your $5 premium</li>
+<li>There is a 10% chance you make $181.57</li>
+<li>There is also a 90% chance you just lose your $5 premium</li>
 <li>This expected value is really only possible if you execute this plan
 many many independent times over the long run</li>
 </ul></li>
