@@ -434,7 +434,7 @@ def get_all_options(token, options_selection):
 
 ```{python main}
 #| code-fold: true
-options_selection = '2023-04-06'
+options_selection = '2023-04-21'
 
 # final_puts = get_all_puts(token, options_selection)
 final_puts, final_calls = get_all_options(token, options_selection)
@@ -446,50 +446,30 @@ final_puts, final_calls = get_all_options(token, options_selection)
 options(scipen = 999)
 
 py$final_puts %>% 
-    filter(Cost >= -100) %>%
     arrange(desc(EV))
 
 py$final_calls %>% 
-    filter(Cost >= -100) %>%
     arrange(desc(EV))
 
 picks <- tibble()
-total_available <- 500
+total_available <- 10000
 picked_stocks <- c()
 type <- NA
 
 while(total_available > 0) {
-    if(is.na(type)) {
-        tmp <- py$final_puts %>% 
-            bind_rows(py$final_calls) %>% 
-            filter(!symbol %in% picked_stocks & 
-                       Cost >= -100) %>% 
-            filter(EV == max(EV)) %>% 
-            head(1)
-        
-        type <- tmp$type[1]
-    } else if (type == "call") {
-        tmp <- py$final_puts %>% 
-            bind_rows(py$final_calls) %>% 
-            filter(!symbol %in% picked_stocks & 
-                       Cost >= -100 & 
-                       type == "put") %>% 
-            filter(EV == max(EV)) %>% 
-            head(1)
-        
-        type <- "put"
-    } else {
-        tmp <- py$final_puts %>% 
-            bind_rows(py$final_calls) %>% 
-            filter(!symbol %in% picked_stocks & 
-                       Cost >= -100 & 
-                       type == "call") %>% 
-            filter(EV == max(EV)) %>% 
-            head(1)
-        
-        type <- "call"
-    }
-    
+    tmp <- py$final_puts %>% 
+        bind_rows(py$final_calls) %>% 
+        mutate(exp_spent = ifelse(type == "call", 
+                                  Cost * -1 * `Llhd Blw EP`,
+                                  Cost * -1 * `Llhd Abv EP`),
+               exp_made = ifelse(type == "call", 
+                                 Gain * `Llhd Abv EP`,
+                                 Gain * `Llhd Blw EP`),
+               width = exp_made - exp_spent,
+               wperc = width / exp_spent) %>% 
+        filter(!symbol %in% picked_stocks) %>% 
+        filter(wperc == max(wperc)) %>% 
+        head(1)
     
     symbol_picked <- tmp %>% 
         pull(symbol)
@@ -507,7 +487,23 @@ while(total_available > 0) {
     picks <- bind_rows(picks, tmp)
 }
 
+plot_dat <- picks %>% 
+    mutate(exp_spent = ifelse(type == "call", 
+                              Cost * -1 * `Llhd Blw EP`,
+                              Cost * -1 * `Llhd Abv EP`),
+           exp_made = ifelse(type == "call", 
+                             Gain * `Llhd Abv EP`,
+                             Gain * `Llhd Blw EP`),
+           width = exp_made - exp_spent,
+           wperc = width / exp_spent,
+           stock_picked = 1:length(exp_made)) %>% 
+    select(stock_picked,
+           cum_spent,
+           cum_made) %>% 
+    pivot_longer(-stock_picked, names_to = "type", values_to = "cumulative")
 
+ggplot(plot_dat, aes(x = stock_picked, y = cumulative, color = type, group = type)) +
+    geom_line()
 
 # write.csv(picks, "put_picks_04032023_mixed.csv")
 
