@@ -14,16 +14,30 @@ library(rvest)
 library(dplyr)
 library(purrr)
 
-url <- "https://www.iweblists.com/us/commerce/MarketCapitalization.html"
+urls <- c("https://companiesmarketcap.com/", 
+          "https://companiesmarketcap.com/page/2/",
+          "https://companiesmarketcap.com/page/3/",
+          "https://companiesmarketcap.com/page/4/",
+          "https://companiesmarketcap.com/page/5/")
 
-top_comp <- url %>% 
-    read_html() %>% 
-    html_table() %>% 
-    pluck(1)
+top_comp <- character()
+for (url in urls) {
+    tmp_comp <- url %>% 
+        read_html() %>% 
+        html_node("body") %>% 
+        html_element("div.table-container") %>% 
+        html_element("table") %>% 
+        html_element("tbody") %>% 
+        html_elements("td.name-td") %>%
+        html_elements("div.company-code") %>% 
+        html_text()
+    
+    top_comp <- append(top_comp, tmp_comp)
 
-names(top_comp) <- top_comp[1, ]
-top_comp <- top_comp %>% 
-    slice(-1)
+}
+
+top_comp <- top_comp[!grepl("\\.", top_comp)]
+
 ```
 
 ```{python libraries}
@@ -33,7 +47,6 @@ top_comp <- top_comp %>%
 import warnings
 warnings.simplefilter(action = 'ignore', category = FutureWarning)
 
-import streamlit as st
 import math
 import requests
 import numpy as np
@@ -42,7 +55,6 @@ from datetime import datetime, timedelta
 import pandas as pd
 from scipy.stats import genextreme
 from random import choices
-import plotly.express as px
 
 NUM_SAMPLES = 100000
 SAMPLE_SIZE = 20000
@@ -434,7 +446,7 @@ def get_all_options(token, options_selection):
 
 ```{python main}
 #| code-fold: true
-options_selection = '2023-04-21'
+options_selection = '2023-04-28'
 
 # final_puts = get_all_puts(token, options_selection)
 final_puts, final_calls = get_all_options(token, options_selection)
@@ -523,7 +535,7 @@ and there are `r 2^length(picks$symbol)` outcomes. What is each outcome and
 what is the likelihood of each?
 
 ```{r}
-picks <- read_csv("put_picks_04032023_mixed.csv")
+# picks <- read_csv("put_picks_04032023_mixed.csv")
 
 NUM_SAMPLES <- 10000
 NUM_PICKS <- length(picks$symbol)
@@ -588,18 +600,31 @@ spy_hist <- spy_hist %>%
            spy_change = Close - last_close) %>% 
     select(Date,
            spy_change)
-cmcsa_hist <- py$get_hist_data("CMCSA", py$token)
-cmcsa_hist <- cmcsa_hist %>% 
-    mutate(last_close = lag(Close), 
-           cmcsa_change = Close - last_close) %>% 
-    select(Date,
-           cmcsa_change)
 
-corr_dat <- spy_hist %>% 
-    inner_join(cmcsa_hist, by = "Date") %>% 
-    filter(!is.na(spy_change) | !is.na(cmcsa_change))
+cor_dat <- tibble()
 
-cor(corr_dat$spy_change, corr_dat$cmcsa_change)
+for (pick in picks$symbol) {
+    pick_hist <- py$get_hist_data(pick, py$token)
+    pick_hist <- cmcsa_hist %>% 
+        mutate(last_close = lag(Close), 
+               cmcsa_change = Close - last_close) %>% 
+        select(Date,
+               pick_change)
+    
+    corr_dat <- spy_hist %>% 
+        inner_join(pick_hist, by = "Date") %>% 
+        filter(!is.na(spy_change) & !is.na(pick_change))
+    
+    cor_ <- cor(corr_dat$spy_change, corr_dat$pick_change)
+    
+    tmp <- tibble(stock = pick,
+                  correlation = cor_)
+    
+    cor_dat <- bind_rows(cor_dat, tmp)
+
+}
+
+hist(cor_dat$correlation)
 ```
 
 
