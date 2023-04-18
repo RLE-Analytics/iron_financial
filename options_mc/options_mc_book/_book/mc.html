@@ -23,7 +23,7 @@
 <meta name="author" content="Jake Rozran" />
 
 
-<meta name="date" content="2023-04-16" />
+<meta name="date" content="2023-04-18" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -84,6 +84,7 @@
 <li class="chapter" data-level="2.3" data-path="mc.html"><a href="mc.html#bringing-it-all-together-expected-value-of-the-option"><i class="fa fa-check"></i><b>2.3</b> Bringing it all Together: Expected Value of the Option</a></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="evaluating-the-portfolio.html"><a href="evaluating-the-portfolio.html"><i class="fa fa-check"></i><b>3</b> Evaluating the Portfolio</a></li>
+<li class="chapter" data-level="4" data-path="the-business-plan.html"><a href="the-business-plan.html"><i class="fa fa-check"></i><b>4</b> The Business Plan</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="def.html"><a href="def.html"><i class="fa fa-check"></i><b>A</b> Definitions</a></li>
 <li class="chapter" data-level="B" data-path="calculating-an-options-expected-value.html"><a href="calculating-an-options-expected-value.html"><i class="fa fa-check"></i><b>B</b> Calculating an Option’s Expected Value</a></li>
@@ -152,16 +153,16 @@ out-of-the-money a strike is, the lower the premium.</p>
 </div>
 <div id="lets-look-at-an-example." class="section level3 hasAnchor" number="2.1.2">
 <h3><span class="header-section-number">2.1.2</span> Let’s look at an example.<a href="mc.html#lets-look-at-an-example." class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>CMCSA is currently trading at $37.96. Let’s use a call option
+<p>CMCSA is currently trading at $38.09. Let’s use a call option
 with a strike of $42 that has a premium of $0.05. The effective price of the
 option (for a call) is: $42 + $0.05 = $42.05.</p>
 <p>What is the probability that we meet or exceed that effective price on the
 strike date? To find that out, we count the number of all of the simulations
 that ended with a price greater than or equal to the effective price and divide
 that by the total count of simulations.</p>
-<p>In this case, we have 974 simulations that are in-the-money
+<p>In this case, we have 1,080 simulations that are in-the-money
 out of a total 10,000, or
-9.74% chance that this
+10.80% chance that this
 option ends in the money.</p>
 <p><img src="_main_files/figure-html/print_histogram-1.png" width="4200" style="display: block; margin: auto;" /></p>
 </div>
@@ -182,23 +183,23 @@ to buy the option and the expected price of the stock if it is above the
 effective price. I am ready to calculate the expected value of the option.</p>
 <ul>
 <li>It costs $5 to buy the option (100 shares at $0.05 each)</li>
-<li>There is a 9.74% chance
+<li>There is a 10.80% chance
 the option ends in-the-money</li>
-<li>There is a 90.26% chance the option ends
+<li>There is a 89.20% chance the option ends
 out-of-the-money</li>
 <li>If the option ends in the money, the stock is expected to be at
-$43.92, which is equivalent to a gain of $43.92 -
-$42.05, or $1.87 (times 100 shares)
+$43.97, which is equivalent to a gain of $43.97 -
+$42.05, or $1.92 (times 100 shares)
 <ul>
-<li>The gain if the option ends in the money is $186.57</li>
+<li>The gain if the option ends in the money is $191.72</li>
 <li>The final gain, minus the $5 to buy the option in the first place, is
-$181.57</li>
+$186.72</li>
 </ul></li>
 <li>Putting all of that together, buying this option is worth
-<strong>$13.17</strong>
+<strong>$15.71</strong>
 <ul>
-<li>There is a 10% chance you make $181.57</li>
-<li>There is also a 90% chance you just lose your $5 premium</li>
+<li>There is a 11% chance you make $186.72</li>
+<li>There is also a 89% chance you just lose your $5 premium</li>
 <li>This expected value is really only possible if you execute this plan
 many many independent times over the long run</li>
 </ul></li>

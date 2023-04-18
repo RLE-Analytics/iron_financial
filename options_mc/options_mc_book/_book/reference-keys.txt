@@ -8,5 +8,6 @@ lets-look-at-an-example.
 expected-stock-price-if-in-the-money
 bringing-it-all-together-expected-value-of-the-option
 evaluating-the-portfolio
+the-business-plan
 def
 calculating-an-options-expected-value

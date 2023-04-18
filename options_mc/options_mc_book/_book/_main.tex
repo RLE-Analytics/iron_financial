@@ -77,7 +77,7 @@
 
 \title{Buying Derivatives - A Monte Carlo Approach}
 \author{Jake Rozran}
-\date{2023-04-16}
+\date{2023-04-18}
 
 \begin{document}
 \maketitle
@@ -167,7 +167,7 @@ out-of-the-money a strike is, the lower the premium.
 \hypertarget{lets-look-at-an-example.}{%
 \subsection{Let's look at an example.}\label{lets-look-at-an-example.}}
 
-CMCSA is currently trading at \$37.96. Let's use a call option
+CMCSA is currently trading at \$38.09. Let's use a call option
 with a strike of \$42 that has a premium of \$0.05. The effective price of the
 option (for a call) is: \$42 + \$0.05 = \$42.05.
 
@@ -176,9 +176,9 @@ strike date? To find that out, we count the number of all of the simulations
 that ended with a price greater than or equal to the effective price and divide
 that by the total count of simulations.
 
-In this case, we have 923 simulations that are in-the-money
+In this case, we have 964 simulations that are in-the-money
 out of a total 10,000, or
-9.23\% chance that this
+9.64\% chance that this
 option ends in the money.
 
 \begin{center}\includegraphics{_main_files/figure-latex/print_histogram-1} \end{center}
@@ -206,34 +206,34 @@ effective price. I am ready to calculate the expected value of the option.
 \item
   It costs \$5 to buy the option (100 shares at \$0.05 each)
 \item
-  There is a 9.23\% chance
+  There is a 9.64\% chance
   the option ends in-the-money
 \item
-  There is a 90.77\% chance the option ends
+  There is a 90.36\% chance the option ends
   out-of-the-money
 \item
   If the option ends in the money, the stock is expected to be at
-  \$43.74, which is equivalent to a gain of \$43.74 -
-  \$42.05, or \$1.69 (times 100 shares)
+  \$43.89, which is equivalent to a gain of \$43.89 -
+  \$42.05, or \$1.84 (times 100 shares)
 
   \begin{itemize}
   \tightlist
   \item
-    The gain if the option ends in the money is \$169.08
+    The gain if the option ends in the money is \$183.58
   \item
     The final gain, minus the \$5 to buy the option in the first place, is
-    \$164.08
+    \$178.58
   \end{itemize}
 \item
   Putting all of that together, buying this option is worth
-  \textbf{\$10.61}
+  \textbf{\$12.70}
 
   \begin{itemize}
   \tightlist
   \item
-    There is a 9\% chance you make \$164.08
+    There is a 10\% chance you make \$178.58
   \item
-    There is also a 91\% chance you just lose your \$5 premium
+    There is also a 90\% chance you just lose your \$5 premium
   \item
     This expected value is really only possible if you execute this plan
     many many independent times over the long run
@@ -242,6 +242,22 @@ effective price. I am ready to calculate the expected value of the option.
 
 \hypertarget{evaluating-the-portfolio}{%
 \chapter{Evaluating the Portfolio}\label{evaluating-the-portfolio}}
+
+THIS IS WHERE I SHOW HOW TO PICK OPTIONS
+
+One thing to consider is the correlation between the stocks.
+
+\hypertarget{the-business-plan}{%
+\chapter{The Business Plan}\label{the-business-plan}}
+
+What if I had \$10MM? How would I use it?
+
+Part of the money goes to making recurring bets on options - that's where the
+big break comes from. I can't put all my eggs in that basket, though\ldots{} that's
+dumb. So to round things out, part of the unused cash should go into short
+term investments: a mixture of high yield savings accounts, money market
+accounts, and CDs. I can also stash some cash in stock index funds and bond
+index funds.
 
 \hypertarget{appendix-appendix}{%
 \appendix}
