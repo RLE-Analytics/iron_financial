@@ -574,8 +574,32 @@ ggplot(sim_sum, aes(x = payout)) +
 NEXT QUESTION TO ANSWER: How correlated are these stocks? How unfair is it to 
 think each is independent of one another. 
 
-```{r}
+To do this, I should compare them all to the same measure: I think that measure 
+is the SPY Index. Essentially, I am creating my own Beta measurement. 
 
+1. Get the SPY
+2. Get the historical for each of my picks
+3. Calculate the correlation for each
+
+```{r}
+spy_hist <- py$get_hist_data("SPY", py$token)
+spy_hist <- spy_hist %>% 
+    mutate(last_close = lag(Close), 
+           spy_change = Close - last_close) %>% 
+    select(Date,
+           spy_change)
+cmcsa_hist <- py$get_hist_data("CMCSA", py$token)
+cmcsa_hist <- cmcsa_hist %>% 
+    mutate(last_close = lag(Close), 
+           cmcsa_change = Close - last_close) %>% 
+    select(Date,
+           cmcsa_change)
+
+corr_dat <- spy_hist %>% 
+    inner_join(cmcsa_hist, by = "Date") %>% 
+    filter(!is.na(spy_change) | !is.na(cmcsa_change))
+
+cor(corr_dat$spy_change, corr_dat$cmcsa_change)
 ```
 
 
