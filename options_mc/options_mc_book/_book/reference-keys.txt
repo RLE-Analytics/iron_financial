@@ -13,3 +13,5 @@ def
 calculating-an-options-expected-value
 url-your-book-url-like-httpsbookdown.orgyihuibookdown
 picking-options
+puts
+calls

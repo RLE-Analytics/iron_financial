@@ -56,6 +56,70 @@
 <link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
 
 
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
 
 
 <link rel="stylesheet" href="style.css" type="text/css" />
@@ -85,7 +149,11 @@
 <li class="chapter" data-level="2.2" data-path="mc.html"><a href="mc.html#expected-stock-price-if-in-the-money"><i class="fa fa-check"></i><b>2.2</b> Expected Stock Price if In-The-Money</a></li>
 <li class="chapter" data-level="2.3" data-path="mc.html"><a href="mc.html#bringing-it-all-together-expected-value-of-the-option"><i class="fa fa-check"></i><b>2.3</b> Bringing it all Together: Expected Value of the Option</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="picking-options.html"><a href="picking-options.html"><i class="fa fa-check"></i><b>3</b> Picking Options</a></li>
+<li class="chapter" data-level="3" data-path="picking-options.html"><a href="picking-options.html"><i class="fa fa-check"></i><b>3</b> Picking Options</a>
+<ul>
+<li class="chapter" data-level="3.0.1" data-path="picking-options.html"><a href="picking-options.html#puts"><i class="fa fa-check"></i><b>3.0.1</b> Puts</a></li>
+<li class="chapter" data-level="3.0.2" data-path="picking-options.html"><a href="picking-options.html#calls"><i class="fa fa-check"></i><b>3.0.2</b> Calls</a></li>
+</ul></li>
 <li class="chapter" data-level="4" data-path="the-business-plan.html"><a href="the-business-plan.html"><i class="fa fa-check"></i><b>4</b> The Business Plan</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="def.html"><a href="def.html"><i class="fa fa-check"></i><b>A</b> Definitions</a></li>
@@ -121,6 +189,8 @@ for a given options expiration date for all stocks on the list</li>
 <li>Pick the “best” option for each stock with a positive expected value</li>
 <li>Evaluate the cumulative list</li>
 </ol>
+<div id="puts" class="section level3 hasAnchor" number="3.0.1">
+<h3><span class="header-section-number">3.0.1</span> Puts<a href="picking-options.html#puts" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -174,7 +244,7 @@ $33.30
 $2,656.70
 </td>
 <td style="text-align:left;">
-45.82%
+45.818%
 </td>
 <td style="text-align:left;">
 $2,492.84
@@ -203,7 +273,7 @@ $10.30
 $684.70
 </td>
 <td style="text-align:left;">
-40.97%
+40.971%
 </td>
 <td style="text-align:left;">
 $658.32
@@ -232,7 +302,7 @@ $6.15
 $498.85
 </td>
 <td style="text-align:left;">
-42.67%
+42.671%
 </td>
 <td style="text-align:left;">
 $481.39
@@ -261,7 +331,7 @@ $9.80
 $625.20
 </td>
 <td style="text-align:left;">
-43.24%
+43.237%
 </td>
 <td style="text-align:left;">
 $603.34
@@ -290,7 +360,7 @@ $7.20
 $372.80
 </td>
 <td style="text-align:left;">
-44.74%
+44.739%
 </td>
 <td style="text-align:left;">
 $355.46
@@ -319,7 +389,7 @@ $7.90
 $434.60
 </td>
 <td style="text-align:left;">
-39.48%
+39.479%
 </td>
 <td style="text-align:left;">
 $416.13
@@ -348,7 +418,7 @@ $5.90
 $496.60
 </td>
 <td style="text-align:left;">
-41.18%
+41.176%
 </td>
 <td style="text-align:left;">
 $482.13
@@ -377,7 +447,7 @@ $4.80
 $490.20
 </td>
 <td style="text-align:left;">
-37.43%
+37.427%
 </td>
 <td style="text-align:left;">
 $475.58
@@ -406,7 +476,7 @@ $4.95
 $330.05
 </td>
 <td style="text-align:left;">
-42.15%
+42.153%
 </td>
 <td style="text-align:left;">
 $317.50
@@ -435,7 +505,7 @@ $6.30
 $268.70
 </td>
 <td style="text-align:left;">
-37.97%
+37.968%
 </td>
 <td style="text-align:left;">
 $252.60
@@ -446,6 +516,9 @@ $220.63
 </tr>
 </tbody>
 </table>
+</div>
+<div id="calls" class="section level3 hasAnchor" number="3.0.2">
+<h3><span class="header-section-number">3.0.2</span> Calls<a href="picking-options.html#calls" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -771,8 +844,725 @@ $118.84
 </tr>
 </tbody>
 </table>
+<p>I want the most bang for my buck, though. So I created a metric to find out
+which options had the biggest differential between cost and expected value.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="picking-options.html#cb1-1" aria-hidden="true" tabindex="-1"></a>dis_puts <span class="sc">%&gt;%</span> </span>
+<span id="cb1-2"><a href="picking-options.html#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">exp_spent =</span> <span class="fu">ifelse</span>(type <span class="sc">==</span> <span class="st">&quot;call&quot;</span>, </span>
+<span id="cb1-3"><a href="picking-options.html#cb1-3" aria-hidden="true" tabindex="-1"></a>                              ask <span class="sc">*</span> <span class="dv">100</span> <span class="sc">*</span> <span class="st">`</span><span class="at">Llhd Blw EP</span><span class="st">`</span>,</span>
+<span id="cb1-4"><a href="picking-options.html#cb1-4" aria-hidden="true" tabindex="-1"></a>                              ask <span class="sc">*</span> <span class="dv">100</span> <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="st">`</span><span class="at">Llhd Blw EP</span><span class="st">`</span>)),</span>
+<span id="cb1-5"><a href="picking-options.html#cb1-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">exp_made =</span> <span class="fu">ifelse</span>(type <span class="sc">==</span> <span class="st">&quot;call&quot;</span>, </span>
+<span id="cb1-6"><a href="picking-options.html#cb1-6" aria-hidden="true" tabindex="-1"></a>                             (<span class="st">`</span><span class="at">EV Abv EP</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>) <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="st">`</span><span class="at">Llhd Blw EP</span><span class="st">`</span>) <span class="sc">*</span> <span class="sc">-</span><span class="dv">100</span>,</span>
+<span id="cb1-7"><a href="picking-options.html#cb1-7" aria-hidden="true" tabindex="-1"></a>                             (<span class="st">`</span><span class="at">EV Blw EP</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>) <span class="sc">*</span> <span class="st">`</span><span class="at">Llhd Blw EP</span><span class="st">`</span> <span class="sc">*</span> <span class="sc">-</span><span class="dv">100</span>),</span>
+<span id="cb1-8"><a href="picking-options.html#cb1-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">width =</span> exp_made <span class="sc">-</span> exp_spent,</span>
+<span id="cb1-9"><a href="picking-options.html#cb1-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">wperc =</span> width <span class="sc">/</span> exp_spent) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-10"><a href="picking-options.html#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(symbol) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-11"><a href="picking-options.html#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_max</span>(wperc, <span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-12"><a href="picking-options.html#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb1-13"><a href="picking-options.html#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(wperc)) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-14"><a href="picking-options.html#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="at">n =</span> <span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-15"><a href="picking-options.html#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">CP =</span> <span class="fu">dollar</span>(CP),</span>
+<span id="cb1-16"><a href="picking-options.html#cb1-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">strike =</span> <span class="fu">dollar</span>(strike),</span>
+<span id="cb1-17"><a href="picking-options.html#cb1-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">ask =</span> <span class="fu">dollar</span>(ask),</span>
+<span id="cb1-18"><a href="picking-options.html#cb1-18" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">dollar</span>(<span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>),</span>
+<span id="cb1-19"><a href="picking-options.html#cb1-19" aria-hidden="true" tabindex="-1"></a>           <span class="at">exp_spent =</span> <span class="fu">dollar</span>(exp_spent),</span>
+<span id="cb1-20"><a href="picking-options.html#cb1-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">exp_made =</span> <span class="fu">dollar</span>(exp_made),</span>
+<span id="cb1-21"><a href="picking-options.html#cb1-21" aria-hidden="true" tabindex="-1"></a>           <span class="at">wperc =</span> <span class="fu">percent</span>(wperc)) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-22"><a href="picking-options.html#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(symbol,</span>
+<span id="cb1-23"><a href="picking-options.html#cb1-23" aria-hidden="true" tabindex="-1"></a>           CP,</span>
+<span id="cb1-24"><a href="picking-options.html#cb1-24" aria-hidden="true" tabindex="-1"></a>           type,</span>
+<span id="cb1-25"><a href="picking-options.html#cb1-25" aria-hidden="true" tabindex="-1"></a>           strike,</span>
+<span id="cb1-26"><a href="picking-options.html#cb1-26" aria-hidden="true" tabindex="-1"></a>           ask,</span>
+<span id="cb1-27"><a href="picking-options.html#cb1-27" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>,</span>
+<span id="cb1-28"><a href="picking-options.html#cb1-28" aria-hidden="true" tabindex="-1"></a>           exp_spent,</span>
+<span id="cb1-29"><a href="picking-options.html#cb1-29" aria-hidden="true" tabindex="-1"></a>           exp_made,</span>
+<span id="cb1-30"><a href="picking-options.html#cb1-30" aria-hidden="true" tabindex="-1"></a>           wperc)<span class="sc">%&gt;%</span> </span>
+<span id="cb1-31"><a href="picking-options.html#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">kbl</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb1-32"><a href="picking-options.html#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>))</span></code></pre></div>
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+symbol
+</th>
+<th style="text-align:left;">
+CP
+</th>
+<th style="text-align:left;">
+type
+</th>
+<th style="text-align:left;">
+strike
+</th>
+<th style="text-align:left;">
+ask
+</th>
+<th style="text-align:left;">
+EP Buy
+</th>
+<th style="text-align:left;">
+exp_spent
+</th>
+<th style="text-align:left;">
+exp_made
+</th>
+<th style="text-align:left;">
+wperc
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+BKNG
+</td>
+<td style="text-align:left;">
+$2,696.68
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$2,350.00
+</td>
+<td style="text-align:left;">
+$0.70
+</td>
+<td style="text-align:left;">
+$2,349.30
+</td>
+<td style="text-align:left;">
+$65.47
+</td>
+<td style="text-align:left;">
+$763.07
+</td>
+<td style="text-align:left;">
+1 065.59%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+JPM
+</td>
+<td style="text-align:left;">
+$141.40
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$135.00
+</td>
+<td style="text-align:left;">
+$0.21
+</td>
+<td style="text-align:left;">
+$134.79
+</td>
+<td style="text-align:left;">
+$17.05
+</td>
+<td style="text-align:left;">
+$85.40
+</td>
+<td style="text-align:left;">
+400.90%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ORCL
+</td>
+<td style="text-align:left;">
+$96.47
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$92.00
+</td>
+<td style="text-align:left;">
+$0.15
+</td>
+<td style="text-align:left;">
+$91.85
+</td>
+<td style="text-align:left;">
+$12.20
+</td>
+<td style="text-align:left;">
+$58.96
+</td>
+<td style="text-align:left;">
+383.23%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AAPL
+</td>
+<td style="text-align:left;">
+$166.47
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$155.00
+</td>
+<td style="text-align:left;">
+$0.17
+</td>
+<td style="text-align:left;">
+$154.83
+</td>
+<td style="text-align:left;">
+$15.22
+</td>
+<td style="text-align:left;">
+$53.77
+</td>
+<td style="text-align:left;">
+253.36%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GS
+</td>
+<td style="text-align:left;">
+$333.91
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$315.00
+</td>
+<td style="text-align:left;">
+$0.45
+</td>
+<td style="text-align:left;">
+$314.55
+</td>
+<td style="text-align:left;">
+$39.20
+</td>
+<td style="text-align:left;">
+$128.75
+</td>
+<td style="text-align:left;">
+228.49%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CSCO
+</td>
+<td style="text-align:left;">
+$50.31
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$49.00
+</td>
+<td style="text-align:left;">
+$0.21
+</td>
+<td style="text-align:left;">
+$48.79
+</td>
+<td style="text-align:left;">
+$15.01
+</td>
+<td style="text-align:left;">
+$48.38
+</td>
+<td style="text-align:left;">
+222.25%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UNH
+</td>
+<td style="text-align:left;">
+$504.48
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$475.00
+</td>
+<td style="text-align:left;">
+$0.55
+</td>
+<td style="text-align:left;">
+$474.45
+</td>
+<td style="text-align:left;">
+$48.95
+</td>
+<td style="text-align:left;">
+$146.14
+</td>
+<td style="text-align:left;">
+198.54%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CRM
+</td>
+<td style="text-align:left;">
+$198.50
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$187.50
+</td>
+<td style="text-align:left;">
+$0.56
+</td>
+<td style="text-align:left;">
+$186.94
+</td>
+<td style="text-align:left;">
+$46.24
+</td>
+<td style="text-align:left;">
+$130.97
+</td>
+<td style="text-align:left;">
+183.23%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SBUX
+</td>
+<td style="text-align:left;">
+$107.91
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$103.00
+</td>
+<td style="text-align:left;">
+$0.20
+</td>
+<td style="text-align:left;">
+$102.80
+</td>
+<td style="text-align:left;">
+$16.86
+</td>
+<td style="text-align:left;">
+$47.70
+</td>
+<td style="text-align:left;">
+182.86%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AMD
+</td>
+<td style="text-align:left;">
+$89.78
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$78.00
+</td>
+<td style="text-align:left;">
+$0.11
+</td>
+<td style="text-align:left;">
+$77.89
+</td>
+<td style="text-align:left;">
+$10.27
+</td>
+<td style="text-align:left;">
+$28.12
+</td>
+<td style="text-align:left;">
+173.89%
+</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="picking-options.html#cb2-1" aria-hidden="true" tabindex="-1"></a>dis_calls <span class="sc">%&gt;%</span> </span>
+<span id="cb2-2"><a href="picking-options.html#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">exp_spent =</span> <span class="fu">ifelse</span>(type <span class="sc">==</span> <span class="st">&quot;call&quot;</span>, </span>
+<span id="cb2-3"><a href="picking-options.html#cb2-3" aria-hidden="true" tabindex="-1"></a>                              ask <span class="sc">*</span> <span class="dv">100</span> <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="st">`</span><span class="at">Llhd Abv EP</span><span class="st">`</span>),</span>
+<span id="cb2-4"><a href="picking-options.html#cb2-4" aria-hidden="true" tabindex="-1"></a>                              ask <span class="sc">*</span> <span class="dv">100</span> <span class="sc">*</span> <span class="st">`</span><span class="at">Llhd Abv EP</span><span class="st">`</span>),</span>
+<span id="cb2-5"><a href="picking-options.html#cb2-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">exp_made =</span> <span class="fu">ifelse</span>(type <span class="sc">==</span> <span class="st">&quot;call&quot;</span>, </span>
+<span id="cb2-6"><a href="picking-options.html#cb2-6" aria-hidden="true" tabindex="-1"></a>                             (<span class="st">`</span><span class="at">EV Abv EP</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>) <span class="sc">*</span>  <span class="st">`</span><span class="at">Llhd Abv EP</span><span class="st">`</span> <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb2-7"><a href="picking-options.html#cb2-7" aria-hidden="true" tabindex="-1"></a>                             (<span class="st">`</span><span class="at">EV Blw EP</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>) <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="st">`</span><span class="at">Llhd Abv EP</span><span class="st">`</span>) <span class="sc">*</span> <span class="dv">100</span>),</span>
+<span id="cb2-8"><a href="picking-options.html#cb2-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">width =</span> exp_made <span class="sc">-</span> exp_spent,</span>
+<span id="cb2-9"><a href="picking-options.html#cb2-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">wperc =</span> width <span class="sc">/</span> exp_spent) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-10"><a href="picking-options.html#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(symbol) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-11"><a href="picking-options.html#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_max</span>(wperc, <span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-12"><a href="picking-options.html#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-13"><a href="picking-options.html#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(wperc)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-14"><a href="picking-options.html#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="at">n =</span> <span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-15"><a href="picking-options.html#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">CP =</span> <span class="fu">dollar</span>(CP),</span>
+<span id="cb2-16"><a href="picking-options.html#cb2-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">strike =</span> <span class="fu">dollar</span>(strike),</span>
+<span id="cb2-17"><a href="picking-options.html#cb2-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">ask =</span> <span class="fu">dollar</span>(ask),</span>
+<span id="cb2-18"><a href="picking-options.html#cb2-18" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">dollar</span>(<span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>),</span>
+<span id="cb2-19"><a href="picking-options.html#cb2-19" aria-hidden="true" tabindex="-1"></a>           <span class="at">exp_spent =</span> <span class="fu">dollar</span>(exp_spent),</span>
+<span id="cb2-20"><a href="picking-options.html#cb2-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">exp_made =</span> <span class="fu">dollar</span>(exp_made),</span>
+<span id="cb2-21"><a href="picking-options.html#cb2-21" aria-hidden="true" tabindex="-1"></a>           <span class="at">wperc =</span> <span class="fu">percent</span>(wperc)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-22"><a href="picking-options.html#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(symbol,</span>
+<span id="cb2-23"><a href="picking-options.html#cb2-23" aria-hidden="true" tabindex="-1"></a>           CP,</span>
+<span id="cb2-24"><a href="picking-options.html#cb2-24" aria-hidden="true" tabindex="-1"></a>           type,</span>
+<span id="cb2-25"><a href="picking-options.html#cb2-25" aria-hidden="true" tabindex="-1"></a>           strike,</span>
+<span id="cb2-26"><a href="picking-options.html#cb2-26" aria-hidden="true" tabindex="-1"></a>           ask,</span>
+<span id="cb2-27"><a href="picking-options.html#cb2-27" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">EP Buy</span><span class="st">`</span>,</span>
+<span id="cb2-28"><a href="picking-options.html#cb2-28" aria-hidden="true" tabindex="-1"></a>           exp_spent,</span>
+<span id="cb2-29"><a href="picking-options.html#cb2-29" aria-hidden="true" tabindex="-1"></a>           exp_made,</span>
+<span id="cb2-30"><a href="picking-options.html#cb2-30" aria-hidden="true" tabindex="-1"></a>           wperc) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-31"><a href="picking-options.html#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">kbl</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-32"><a href="picking-options.html#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">&quot;striped&quot;</span>, <span class="st">&quot;hover&quot;</span>))</span></code></pre></div>
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+symbol
+</th>
+<th style="text-align:left;">
+CP
+</th>
+<th style="text-align:left;">
+type
+</th>
+<th style="text-align:left;">
+strike
+</th>
+<th style="text-align:left;">
+ask
+</th>
+<th style="text-align:left;">
+EP Buy
+</th>
+<th style="text-align:left;">
+exp_spent
+</th>
+<th style="text-align:left;">
+exp_made
+</th>
+<th style="text-align:left;">
+wperc
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+BKNG
+</td>
+<td style="text-align:left;">
+$2,696.68
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$2,900.00
+</td>
+<td style="text-align:left;">
+$0.95
+</td>
+<td style="text-align:left;">
+$2,900.95
+</td>
+<td style="text-align:left;">
+$82.01
+</td>
+<td style="text-align:left;">
+$1,756.92
+</td>
+<td style="text-align:left;">
+2 042.2%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AAPL
+</td>
+<td style="text-align:left;">
+$166.47
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$180.00
+</td>
+<td style="text-align:left;">
+$0.04
+</td>
+<td style="text-align:left;">
+$180.04
+</td>
+<td style="text-align:left;">
+$3.77
+</td>
+<td style="text-align:left;">
+$28.59
+</td>
+<td style="text-align:left;">
+658.3%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GS
+</td>
+<td style="text-align:left;">
+$333.91
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$380.00
+</td>
+<td style="text-align:left;">
+$0.01
+</td>
+<td style="text-align:left;">
+$380.01
+</td>
+<td style="text-align:left;">
+$0.99
+</td>
+<td style="text-align:left;">
+$7.05
+</td>
+<td style="text-align:left;">
+610.6%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ORCL
+</td>
+<td style="text-align:left;">
+$96.47
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$101.00
+</td>
+<td style="text-align:left;">
+$0.10
+</td>
+<td style="text-align:left;">
+$101.10
+</td>
+<td style="text-align:left;">
+$8.38
+</td>
+<td style="text-align:left;">
+$52.14
+</td>
+<td style="text-align:left;">
+522.5%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CRM
+</td>
+<td style="text-align:left;">
+$198.50
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$217.50
+</td>
+<td style="text-align:left;">
+$0.07
+</td>
+<td style="text-align:left;">
+$217.57
+</td>
+<td style="text-align:left;">
+$6.59
+</td>
+<td style="text-align:left;">
+$40.65
+</td>
+<td style="text-align:left;">
+516.6%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CSCO
+</td>
+<td style="text-align:left;">
+$50.31
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$52.50
+</td>
+<td style="text-align:left;">
+$0.05
+</td>
+<td style="text-align:left;">
+$52.55
+</td>
+<td style="text-align:left;">
+$4.21
+</td>
+<td style="text-align:left;">
+$23.93
+</td>
+<td style="text-align:left;">
+468.0%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UNH
+</td>
+<td style="text-align:left;">
+$504.48
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$545.00
+</td>
+<td style="text-align:left;">
+$0.10
+</td>
+<td style="text-align:left;">
+$545.10
+</td>
+<td style="text-align:left;">
+$9.61
+</td>
+<td style="text-align:left;">
+$50.31
+</td>
+<td style="text-align:left;">
+423.4%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+JPM
+</td>
+<td style="text-align:left;">
+$141.40
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$150.00
+</td>
+<td style="text-align:left;">
+$0.08
+</td>
+<td style="text-align:left;">
+$150.08
+</td>
+<td style="text-align:left;">
+$7.26
+</td>
+<td style="text-align:left;">
+$37.04
+</td>
+<td style="text-align:left;">
+410.1%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LOW
+</td>
+<td style="text-align:left;">
+$208.10
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$220.00
+</td>
+<td style="text-align:left;">
+$0.13
+</td>
+<td style="text-align:left;">
+$220.13
+</td>
+<td style="text-align:left;">
+$11.74
+</td>
+<td style="text-align:left;">
+$57.16
+</td>
+<td style="text-align:left;">
+387.1%
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HD
+</td>
+<td style="text-align:left;">
+$298.95
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$320.00
+</td>
+<td style="text-align:left;">
+$0.07
+</td>
+<td style="text-align:left;">
+$320.07
+</td>
+<td style="text-align:left;">
+$6.69
+</td>
+<td style="text-align:left;">
+$29.32
+</td>
+<td style="text-align:left;">
+338.0%
+</td>
+</tr>
+</tbody>
+</table>
 <p>One thing to consider is the correlation between the stocks.</p>
 
+</div>
 </div>
             </section>
 

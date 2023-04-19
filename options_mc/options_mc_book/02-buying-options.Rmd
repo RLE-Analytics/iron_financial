@@ -10,6 +10,8 @@ for a given options expiration date for all stocks on the list
 4. Pick the "best" option for each stock with a positive expected value
 5. Evaluate the cumulative list
 
+
+### Puts
 ```{r}
 #| echo: false
 #| message: false
@@ -20,29 +22,49 @@ library(readr)
 library(scales)
 library(dplyr)
 
-dis_puts <- read_csv("../dis_puts.csv") %>% 
+dis_puts <- read_csv("../dis_puts.csv") 
+
+dis_puts_pres <- dis_puts %>% 
+    group_by(symbol) %>% 
+    slice_max(EV, n = 1) %>% 
+    ungroup() %>% 
+    arrange(desc(EV)) %>% 
     mutate(CP = dollar(CP),
            strike = dollar(strike),
            ask = dollar(ask),
            `EP Buy` = dollar(`EP Buy`),
            `Llhd Blw EP` = percent(`Llhd Blw EP`),
            `EV Blw EP` = dollar(`EV Blw EP`),
-           EV = dollar(EV))
+           EV = dollar(EV)) %>% 
+    head(n = 10)
 
-dis_puts %>% 
+dis_puts_pres %>% 
     kbl() %>%
     kable_styling(bootstrap_options = c("striped", "hover"))
+```
 
-dis_calls <- read_csv("../dis_calls.csv") %>% 
+
+### Calls
+```{r}
+#| echo: false
+#| message: false
+dis_calls <- read_csv("../dis_calls.csv") 
+
+dis_calls_pres <- dis_calls %>% 
+    group_by(symbol) %>% 
+    slice_max(EV, n = 1) %>% 
+    ungroup() %>% 
+    arrange(desc(EV)) %>% 
     mutate(CP = dollar(CP),
            strike = dollar(strike),
            ask = dollar(ask),
            `EP Buy` = dollar(`EP Buy`),
            `Llhd Abv EP` = percent(`Llhd Abv EP`),
            `EV Abv EP` = dollar(`EV Abv EP`),
-           EV = dollar(EV))
+           EV = dollar(EV)) %>% 
+    head(n = 10)
 
-dis_calls %>% 
+dis_calls_pres %>% 
     kbl() %>%
     kable_styling(bootstrap_options = c("striped", "hover"))
 ```
@@ -50,8 +72,75 @@ dis_calls %>%
 I want the most bang for my buck, though. So I created a metric to find out 
 which options had the biggest differential between cost and expected value.
 
+```{r}
+dis_puts %>% 
+    mutate(exp_spent = ifelse(type == "call", 
+                              ask * 100 * `Llhd Blw EP`,
+                              ask * 100 * (1 - `Llhd Blw EP`)),
+           exp_made = ifelse(type == "call", 
+                             (`EV Abv EP` - `EP Buy`) * (1 - `Llhd Blw EP`) * -100,
+                             (`EV Blw EP` - `EP Buy`) * `Llhd Blw EP` * -100),
+           width = exp_made - exp_spent,
+           wperc = width / exp_spent) %>% 
+    group_by(symbol) %>% 
+    slice_max(wperc, n = 1) %>% 
+    ungroup() %>% 
+    arrange(desc(wperc)) %>% 
+    head(n = 10) %>% 
+    mutate(CP = dollar(CP),
+           strike = dollar(strike),
+           ask = dollar(ask),
+           `EP Buy` = dollar(`EP Buy`),
+           exp_spent = dollar(exp_spent),
+           exp_made = dollar(exp_made),
+           wperc = percent(wperc)) %>% 
+    select(symbol,
+           CP,
+           type,
+           strike,
+           ask,
+           `EP Buy`,
+           exp_spent,
+           exp_made,
+           wperc)%>% 
+    kbl() %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
 
-
+```{r}
+dis_calls %>% 
+    mutate(exp_spent = ifelse(type == "call", 
+                              ask * 100 * (1 - `Llhd Abv EP`),
+                              ask * 100 * `Llhd Abv EP`),
+           exp_made = ifelse(type == "call", 
+                             (`EV Abv EP` - `EP Buy`) *  `Llhd Abv EP` * 100,
+                             (`EV Blw EP` - `EP Buy`) * (1 - `Llhd Abv EP`) * 100),
+           width = exp_made - exp_spent,
+           wperc = width / exp_spent) %>% 
+    group_by(symbol) %>% 
+    slice_max(wperc, n = 1) %>% 
+    ungroup() %>% 
+    arrange(desc(wperc)) %>% 
+    head(n = 10) %>% 
+    mutate(CP = dollar(CP),
+           strike = dollar(strike),
+           ask = dollar(ask),
+           `EP Buy` = dollar(`EP Buy`),
+           exp_spent = dollar(exp_spent),
+           exp_made = dollar(exp_made),
+           wperc = percent(wperc)) %>% 
+    select(symbol,
+           CP,
+           type,
+           strike,
+           ask,
+           `EP Buy`,
+           exp_spent,
+           exp_made,
+           wperc) %>% 
+    kbl() %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
 
 
 
