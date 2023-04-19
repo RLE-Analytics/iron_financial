@@ -13,6 +13,7 @@ library(reticulate)
 library(rvest)
 library(dplyr)
 library(purrr)
+library(tidyr)
 
 urls <- c("https://companiesmarketcap.com/", 
           "https://companiesmarketcap.com/page/2/",
@@ -387,7 +388,7 @@ def reshape_calls(calls):
 
 
 def get_list_of_stocks():
-    list_of_stocks = r.top_comp['Symbol'].tolist()
+    list_of_stocks = r.top_comp
     
     return(list_of_stocks)
 
@@ -592,6 +593,7 @@ is the SPY Index. Essentially, I am creating my own Beta measurement.
 1. Get the SPY
 2. Get the historical for each of my picks
 3. Calculate the correlation for each
+4. Calculate the pairwise correlation for each
 
 ```{r}
 spy_hist <- py$get_hist_data("SPY", py$token)
@@ -601,19 +603,25 @@ spy_hist <- spy_hist %>%
     select(Date,
            spy_change)
 
+price_dat <- spy_hist
 cor_dat <- tibble()
 
 for (pick in picks$symbol) {
     pick_hist <- py$get_hist_data(pick, py$token)
-    pick_hist <- cmcsa_hist %>% 
+    pick_hist <- pick_hist %>% 
         mutate(last_close = lag(Close), 
-               cmcsa_change = Close - last_close) %>% 
+               pick_change = Close - last_close) %>% 
         select(Date,
                pick_change)
     
     corr_dat <- spy_hist %>% 
         inner_join(pick_hist, by = "Date") %>% 
         filter(!is.na(spy_change) & !is.na(pick_change))
+    
+    names(pick_hist) <- c("Date", paste0(pick, "_change"))
+    
+    price_dat <- price_dat %>% 
+        full_join(pick_hist, by = "Date")
     
     cor_ <- cor(corr_dat$spy_change, corr_dat$pick_change)
     
@@ -624,7 +632,14 @@ for (pick in picks$symbol) {
 
 }
 
+price_dat <- price_dat %>% 
+    select(-Date) %>% 
+    drop_na()
+
+cor(price_dat)
+
 hist(cor_dat$correlation)
 ```
-
+Long story short, there is correlation between all of these and I should 
+adjust my expectations for it. Just not sure how to do that yet. 
 
