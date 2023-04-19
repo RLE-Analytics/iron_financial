@@ -458,11 +458,40 @@ final_puts, final_calls = get_all_options(token, options_selection)
 
 options(scipen = 999)
 
-py$final_puts %>% 
-    arrange(desc(EV))
+dis_puts <- py$final_puts %>% 
+    group_by(symbol) %>% 
+    slice_max(EV, n = 1) %>% 
+    ungroup() %>% 
+    arrange(desc(EV)) %>% 
+    select(symbol,
+           CP, 
+           type,
+           strike,
+           ask,
+           `EP Buy`,
+           `Llhd Blw EP`,
+           `EV Blw EP`,
+           EV) %>% 
+    head(n = 10)
 
-py$final_calls %>% 
-    arrange(desc(EV))
+dis_calls <- py$final_calls %>% 
+    group_by(symbol) %>% 
+    slice_max(EV, n = 1) %>% 
+    ungroup() %>% 
+    arrange(desc(EV)) %>% 
+    select(symbol,
+           CP, 
+           type,
+           strike,
+           ask,
+           `EP Buy`,
+           `Llhd Abv EP`,
+           `EV Abv EP`,
+           EV) %>% 
+    head(n = 10)
+
+write.csv(dis_puts, "dis_puts.csv", row.names = FALSE)
+write.csv(dis_calls, "dis_calls.csv", row.names = FALSE)
 
 picks <- tibble()
 total_available <- 10000

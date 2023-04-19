@@ -11,3 +11,5 @@ evaluating-the-portfolio
 the-business-plan
 def
 calculating-an-options-expected-value
+url-your-book-url-like-httpsbookdown.orgyihuibookdown
+picking-options

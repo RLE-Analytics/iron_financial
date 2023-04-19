@@ -1,5 +1,69 @@
-# Evaluating the Portfolio
+# Picking Options
 
-THIS IS WHERE I SHOW HOW TO PICK OPTIONS
+Using the simulation outlined on the previous page, I then evaluate options 
+from the companies with the highest market capitalization (definition). 
+
+1. Simulate the expected values for all available strike prices (calls and puts) 
+for a given options expiration date for all stocks on the list
+2. Remove any stock options that do not have a positive expected value
+3. Create a few metrics to evaluate each option
+4. Pick the "best" option for each stock with a positive expected value
+5. Evaluate the cumulative list
+
+```{r}
+#| echo: false
+#| message: false
+
+library(kableExtra)
+library(knitr)
+library(readr)
+library(scales)
+library(dplyr)
+
+dis_puts <- read_csv("../dis_puts.csv") %>% 
+    mutate(CP = dollar(CP),
+           strike = dollar(strike),
+           ask = dollar(ask),
+           `EP Buy` = dollar(`EP Buy`),
+           `Llhd Blw EP` = percent(`Llhd Blw EP`),
+           `EV Blw EP` = dollar(`EV Blw EP`),
+           EV = dollar(EV))
+
+dis_puts %>% 
+    kbl() %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+
+dis_calls <- read_csv("../dis_calls.csv") %>% 
+    mutate(CP = dollar(CP),
+           strike = dollar(strike),
+           ask = dollar(ask),
+           `EP Buy` = dollar(`EP Buy`),
+           `Llhd Abv EP` = percent(`Llhd Abv EP`),
+           `EV Abv EP` = dollar(`EV Abv EP`),
+           EV = dollar(EV))
+
+dis_calls %>% 
+    kbl() %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+I want the most bang for my buck, though. So I created a metric to find out 
+which options had the biggest differential between cost and expected value.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 One thing to consider is the correlation between the stocks. 

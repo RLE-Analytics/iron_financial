@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>3 Picking Options | Buying Derivatives - A Monte Carlo Approach</title>
+  <meta name="description" content="This is a strategy for buying puts and calls." />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="3 Picking Options | Buying Derivatives - A Monte Carlo Approach" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This is a strategy for buying puts and calls." />
+  <meta name="github-repo" content="RLE-Analytics/iron_financial" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="3 Picking Options | Buying Derivatives - A Monte Carlo Approach" />
+  
+  <meta name="twitter:description" content="This is a strategy for buying puts and calls." />
+  
+
+<meta name="author" content="Jake Rozran" />
+
+
+<meta name="date" content="2023-04-19" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="mc.html"/>
+<link rel="next" href="the-business-plan.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Options MC</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> url: your book url like https://bookdown.org/yihui/bookdown</a></li>
+<li class="chapter" data-level="2" data-path="mc.html"><a href="mc.html"><i class="fa fa-check"></i><b>2</b> The Monte Carlo Engine</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="mc.html"><a href="mc.html#effective-price-and-being-in-the-money"><i class="fa fa-check"></i><b>2.1</b> Effective Price and Being In-The-Money</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="mc.html"><a href="mc.html#why-do-we-care-about-the-effective-price-instead-of-just-strike-price"><i class="fa fa-check"></i><b>2.1.1</b> Why do we care about the effective price (instead of just Strike Price)?</a></li>
+<li class="chapter" data-level="2.1.2" data-path="mc.html"><a href="mc.html#lets-look-at-an-example."><i class="fa fa-check"></i><b>2.1.2</b> Let’s look at an example.</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="mc.html"><a href="mc.html#expected-stock-price-if-in-the-money"><i class="fa fa-check"></i><b>2.2</b> Expected Stock Price if In-The-Money</a></li>
+<li class="chapter" data-level="2.3" data-path="mc.html"><a href="mc.html#bringing-it-all-together-expected-value-of-the-option"><i class="fa fa-check"></i><b>2.3</b> Bringing it all Together: Expected Value of the Option</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="picking-options.html"><a href="picking-options.html"><i class="fa fa-check"></i><b>3</b> Picking Options</a></li>
+<li class="chapter" data-level="4" data-path="the-business-plan.html"><a href="the-business-plan.html"><i class="fa fa-check"></i><b>4</b> The Business Plan</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="def.html"><a href="def.html"><i class="fa fa-check"></i><b>A</b> Definitions</a></li>
+<li class="divider"></li>
+<li><a href="https://https://www.rleanalytics.com/" target="blank">RLE Analytics</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Buying Derivatives - A Monte Carlo Approach</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="picking-options" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">3</span> Picking Options<a href="picking-options.html#picking-options" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>Using the simulation outlined on the previous page, I then evaluate options
+from the companies with the highest market capitalization (definition).</p>
+<ol style="list-style-type: decimal">
+<li>Simulate the expected values for all available strike prices (calls and puts)
+for a given options expiration date for all stocks on the list</li>
+<li>Remove any stock options that do not have a positive expected value</li>
+<li>Create a few metrics to evaluate each option</li>
+<li>Pick the “best” option for each stock with a positive expected value</li>
+<li>Evaluate the cumulative list</li>
+</ol>
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+symbol
+</th>
+<th style="text-align:left;">
+CP
+</th>
+<th style="text-align:left;">
+type
+</th>
+<th style="text-align:left;">
+strike
+</th>
+<th style="text-align:left;">
+ask
+</th>
+<th style="text-align:left;">
+EP Buy
+</th>
+<th style="text-align:left;">
+Llhd Blw EP
+</th>
+<th style="text-align:left;">
+EV Blw EP
+</th>
+<th style="text-align:left;">
+EV
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+BKNG
+</td>
+<td style="text-align:left;">
+$2,696.68
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$2,690.00
+</td>
+<td style="text-align:left;">
+$33.30
+</td>
+<td style="text-align:left;">
+$2,656.70
+</td>
+<td style="text-align:left;">
+45.82%
+</td>
+<td style="text-align:left;">
+$2,492.84
+</td>
+<td style="text-align:left;">
+$5,703.70
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BLK
+</td>
+<td style="text-align:left;">
+$694.03
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$695.00
+</td>
+<td style="text-align:left;">
+$10.30
+</td>
+<td style="text-align:left;">
+$684.70
+</td>
+<td style="text-align:left;">
+40.97%
+</td>
+<td style="text-align:left;">
+$658.32
+</td>
+<td style="text-align:left;">
+$472.84
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UNH
+</td>
+<td style="text-align:left;">
+$504.48
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$505.00
+</td>
+<td style="text-align:left;">
+$6.15
+</td>
+<td style="text-align:left;">
+$498.85
+</td>
+<td style="text-align:left;">
+42.67%
+</td>
+<td style="text-align:left;">
+$481.39
+</td>
+<td style="text-align:left;">
+$392.40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVGO
+</td>
+<td style="text-align:left;">
+$632.32
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$635.00
+</td>
+<td style="text-align:left;">
+$9.80
+</td>
+<td style="text-align:left;">
+$625.20
+</td>
+<td style="text-align:left;">
+43.24%
+</td>
+<td style="text-align:left;">
+$603.34
+</td>
+<td style="text-align:left;">
+$388.71
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ADBE
+</td>
+<td style="text-align:left;">
+$377.55
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$380.00
+</td>
+<td style="text-align:left;">
+$7.20
+</td>
+<td style="text-align:left;">
+$372.80
+</td>
+<td style="text-align:left;">
+44.74%
+</td>
+<td style="text-align:left;">
+$355.46
+</td>
+<td style="text-align:left;">
+$377.93
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+INTU
+</td>
+<td style="text-align:left;">
+$442.59
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$442.50
+</td>
+<td style="text-align:left;">
+$7.90
+</td>
+<td style="text-align:left;">
+$434.60
+</td>
+<td style="text-align:left;">
+39.48%
+</td>
+<td style="text-align:left;">
+$416.13
+</td>
+<td style="text-align:left;">
+$250.96
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LMT
+</td>
+<td style="text-align:left;">
+$501.41
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$502.50
+</td>
+<td style="text-align:left;">
+$5.90
+</td>
+<td style="text-align:left;">
+$496.60
+</td>
+<td style="text-align:left;">
+41.18%
+</td>
+<td style="text-align:left;">
+$482.13
+</td>
+<td style="text-align:left;">
+$248.66
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+COST
+</td>
+<td style="text-align:left;">
+$496.90
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$495.00
+</td>
+<td style="text-align:left;">
+$4.80
+</td>
+<td style="text-align:left;">
+$490.20
+</td>
+<td style="text-align:left;">
+37.43%
+</td>
+<td style="text-align:left;">
+$475.58
+</td>
+<td style="text-align:left;">
+$246.86
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GS
+</td>
+<td style="text-align:left;">
+$333.91
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$335.00
+</td>
+<td style="text-align:left;">
+$4.95
+</td>
+<td style="text-align:left;">
+$330.05
+</td>
+<td style="text-align:left;">
+42.15%
+</td>
+<td style="text-align:left;">
+$317.50
+</td>
+<td style="text-align:left;">
+$242.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NVDA
+</td>
+<td style="text-align:left;">
+$276.67
+</td>
+<td style="text-align:left;">
+put
+</td>
+<td style="text-align:left;">
+$275.00
+</td>
+<td style="text-align:left;">
+$6.30
+</td>
+<td style="text-align:left;">
+$268.70
+</td>
+<td style="text-align:left;">
+37.97%
+</td>
+<td style="text-align:left;">
+$252.60
+</td>
+<td style="text-align:left;">
+$220.63
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+symbol
+</th>
+<th style="text-align:left;">
+CP
+</th>
+<th style="text-align:left;">
+type
+</th>
+<th style="text-align:left;">
+strike
+</th>
+<th style="text-align:left;">
+ask
+</th>
+<th style="text-align:left;">
+EP Buy
+</th>
+<th style="text-align:left;">
+Llhd Abv EP
+</th>
+<th style="text-align:left;">
+EV Abv EP
+</th>
+<th style="text-align:left;">
+EV
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+BKNG
+</td>
+<td style="text-align:left;">
+$2,696.68
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$2,750.00
+</td>
+<td style="text-align:left;">
+$19.40
+</td>
+<td style="text-align:left;">
+$2,769.40
+</td>
+<td style="text-align:left;">
+32.231%
+</td>
+<td style="text-align:left;">
+$2,913.99
+</td>
+<td style="text-align:left;">
+$3,345.41
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BLK
+</td>
+<td style="text-align:left;">
+$694.03
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$710.00
+</td>
+<td style="text-align:left;">
+$4.00
+</td>
+<td style="text-align:left;">
+$714.00
+</td>
+<td style="text-align:left;">
+25.740%
+</td>
+<td style="text-align:left;">
+$737.09
+</td>
+<td style="text-align:left;">
+$297.17
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UNH
+</td>
+<td style="text-align:left;">
+$504.48
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$512.50
+</td>
+<td style="text-align:left;">
+$3.15
+</td>
+<td style="text-align:left;">
+$515.65
+</td>
+<td style="text-align:left;">
+27.802%
+</td>
+<td style="text-align:left;">
+$530.96
+</td>
+<td style="text-align:left;">
+$198.31
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+COST
+</td>
+<td style="text-align:left;">
+$496.90
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$505.00
+</td>
+<td style="text-align:left;">
+$2.45
+</td>
+<td style="text-align:left;">
+$507.45
+</td>
+<td style="text-align:left;">
+27.787%
+</td>
+<td style="text-align:left;">
+$520.64
+</td>
+<td style="text-align:left;">
+$189.68
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ADBE
+</td>
+<td style="text-align:left;">
+$377.55
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$385.00
+</td>
+<td style="text-align:left;">
+$3.25
+</td>
+<td style="text-align:left;">
+$388.25
+</td>
+<td style="text-align:left;">
+27.930%
+</td>
+<td style="text-align:left;">
+$403.27
+</td>
+<td style="text-align:left;">
+$185.35
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVGO
+</td>
+<td style="text-align:left;">
+$632.32
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$650.00
+</td>
+<td style="text-align:left;">
+$2.75
+</td>
+<td style="text-align:left;">
+$652.75
+</td>
+<td style="text-align:left;">
+20.816%
+</td>
+<td style="text-align:left;">
+$671.18
+</td>
+<td style="text-align:left;">
+$165.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GS
+</td>
+<td style="text-align:left;">
+$333.91
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$340.00
+</td>
+<td style="text-align:left;">
+$2.55
+</td>
+<td style="text-align:left;">
+$342.55
+</td>
+<td style="text-align:left;">
+27.829%
+</td>
+<td style="text-align:left;">
+$353.84
+</td>
+<td style="text-align:left;">
+$130.12
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NVDA
+</td>
+<td style="text-align:left;">
+$276.67
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$290.00
+</td>
+<td style="text-align:left;">
+$2.54
+</td>
+<td style="text-align:left;">
+$292.54
+</td>
+<td style="text-align:left;">
+21.786%
+</td>
+<td style="text-align:left;">
+$307.41
+</td>
+<td style="text-align:left;">
+$125.21
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LMT
+</td>
+<td style="text-align:left;">
+$501.41
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$515.00
+</td>
+<td style="text-align:left;">
+$1.40
+</td>
+<td style="text-align:left;">
+$516.40
+</td>
+<td style="text-align:left;">
+19.556%
+</td>
+<td style="text-align:left;">
+$528.41
+</td>
+<td style="text-align:left;">
+$122.26
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CRM
+</td>
+<td style="text-align:left;">
+$198.50
+</td>
+<td style="text-align:left;">
+call
+</td>
+<td style="text-align:left;">
+$202.50
+</td>
+<td style="text-align:left;">
+$1.74
+</td>
+<td style="text-align:left;">
+$204.24
+</td>
+<td style="text-align:left;">
+29.264%
+</td>
+<td style="text-align:left;">
+$212.51
+</td>
+<td style="text-align:left;">
+$118.84
+</td>
+</tr>
+</tbody>
+</table>
+<p>One thing to consider is the correlation between the stocks.</p>
+
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="mc.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="the-business-plan.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/RLE-Analytics/iron_financial/edit/main/02-buying-options.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>
