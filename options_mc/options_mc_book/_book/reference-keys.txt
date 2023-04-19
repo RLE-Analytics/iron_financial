@@ -15,3 +15,8 @@ url-your-book-url-like-httpsbookdown.orgyihuibookdown
 picking-options
 puts
 calls
+expected-value
+expected-rate-of-return
+puts-1
+calls-1
+simulating-the-outcomes-results

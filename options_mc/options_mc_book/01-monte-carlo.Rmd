@@ -460,7 +460,8 @@ print(histogram)
 Now that I know the probability of it going above the effective price, I need to 
 calculate the expected price of the stock if it is in-the-money. To do this, I 
 simply take all simulations that end at or above the effective price and 
-calculate the expected value (or mean).
+calculate the expected value (typically this is the mean, but here I am using 
+the median as this dataset DEFINITELY is influenced by outliers).
 
 ```{r print_ev}
 #| echo: false

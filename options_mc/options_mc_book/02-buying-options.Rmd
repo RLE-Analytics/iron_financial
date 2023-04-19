@@ -10,6 +10,7 @@ for a given options expiration date for all stocks on the list
 4. Pick the "best" option for each stock with a positive expected value
 5. Evaluate the cumulative list
 
+## Expected Value
 
 ### Puts
 ```{r}
@@ -69,10 +70,18 @@ dis_calls_pres %>%
     kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+## Expected Rate of Return
+
 I want the most bang for my buck, though. So I created a metric to find out 
-which options had the biggest differential between cost and expected value.
+which options had the biggest differential between expected cost and expected 
+return.
+
+### Puts
 
 ```{r}
+#| echo: false
+#| message: false
+
 dis_puts %>% 
     mutate(exp_spent = ifelse(type == "call", 
                               ask * 100 * `Llhd Blw EP`,
@@ -88,12 +97,12 @@ dis_puts %>%
     arrange(desc(wperc)) %>% 
     head(n = 10) %>% 
     mutate(CP = dollar(CP),
-           strike = dollar(strike),
+           strike = dollar(strike, accuracy = 1L),
            ask = dollar(ask),
-           `EP Buy` = dollar(`EP Buy`),
-           exp_spent = dollar(exp_spent),
-           exp_made = dollar(exp_made),
-           wperc = percent(wperc)) %>% 
+           `EP Buy` = dollar(`EP Buy`, accuracy = 1L),
+           exp_spent = dollar(exp_spent, accuracy = 1L),
+           exp_made = dollar(exp_made, accuracy = 1L),
+           wperc = percent(wperc, accuracy = 1L)) %>% 
     select(symbol,
            CP,
            type,
@@ -107,7 +116,12 @@ dis_puts %>%
     kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+### Calls
+
 ```{r}
+#| echo: false
+#| message: false
+
 dis_calls %>% 
     mutate(exp_spent = ifelse(type == "call", 
                               ask * 100 * (1 - `Llhd Abv EP`),
@@ -123,12 +137,12 @@ dis_calls %>%
     arrange(desc(wperc)) %>% 
     head(n = 10) %>% 
     mutate(CP = dollar(CP),
-           strike = dollar(strike),
+           strike = dollar(strike, accuracy = 1L),
            ask = dollar(ask),
-           `EP Buy` = dollar(`EP Buy`),
-           exp_spent = dollar(exp_spent),
-           exp_made = dollar(exp_made),
-           wperc = percent(wperc)) %>% 
+           `EP Buy` = dollar(`EP Buy`, accuracy = 1L),
+           exp_spent = dollar(exp_spent, accuracy = 1L),
+           exp_made = dollar(exp_made, accuracy = 1L),
+           wperc = percent(wperc, accuracy = 1L)) %>% 
     select(symbol,
            CP,
            type,
@@ -142,9 +156,10 @@ dis_calls %>%
     kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+## Simulating the Outcomes Results
 
-
-
+Tapping back into the Monte Carlo engine, we can simulate how likely it is for 
+each option to be in-the-money in conjunction with all the other options picked. 
 
 
 

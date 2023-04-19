@@ -257,10 +257,10 @@ def eval_puts(symbol, token, option_date, final_prices):
             sum(final_prices > strp) / NUM_SAMPLES)
         
         puts.loc[puts['strike'] == strp, 'ev_above_ep'] = (
-            np.mean(final_prices[final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()])) 
+            np.median(final_prices[final_prices > puts.loc[puts['strike'] == strp, 'strike_plus_bid'].item()])) 
         
         puts.loc[puts['strike'] == strp, 'ev_below_ep'] = (
-            np.mean(final_prices[final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()])) 
+            np.median(final_prices[final_prices < puts.loc[puts['strike'] == strp, 'strike_minus_ask'].item()])) 
     
     return(puts)
 
@@ -290,10 +290,10 @@ def eval_calls(symbol, token, option_date, final_prices):
             sum(final_prices > strp) / NUM_SAMPLES)
         
         calls.loc[calls['strike'] == strp, 'ev_below_ep'] = (
-            np.mean(final_prices[final_prices < calls.loc[calls['strike'] == strp, 'strike_minus_bid'].item()])) 
+            np.median(final_prices[final_prices < calls.loc[calls['strike'] == strp, 'strike_minus_bid'].item()])) 
         
         calls.loc[calls['strike'] == strp, 'ev_above_ep'] = (
-            np.mean(final_prices[final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_ask'].item()])) 
+            np.median(final_prices[final_prices > calls.loc[calls['strike'] == strp, 'strike_plus_ask'].item()])) 
     
     return(calls)
 
@@ -488,6 +488,8 @@ total_available <- 10000
 picked_stocks <- c()
 type <- NA
 
+all_options_symbols <- length(unique(append(py$final_calls$symbol, py$final_puts$symbol)))
+
 while(total_available > 0) {
     tmp <- py$final_puts %>% 
         bind_rows(py$final_calls) %>% 
@@ -517,35 +519,14 @@ while(total_available > 0) {
     picked_stocks <- c(picked_stocks, symbol_picked)
     
     picks <- bind_rows(picks, tmp)
+    
+    if(dim(picks)[1] == all_options_symbols) {
+        break
+    }
 }
 
-plot_dat <- picks %>% 
-    mutate(exp_spent = ifelse(type == "call", 
-                              Cost * -1 * `Llhd Blw EP`,
-                              Cost * -1 * `Llhd Abv EP`),
-           exp_made = ifelse(type == "call", 
-                             Gain * `Llhd Abv EP`,
-                             Gain * `Llhd Blw EP`),
-           width = exp_made - exp_spent,
-           wperc = width / exp_spent,
-           stock_picked = 1:length(exp_made),
-           cum_spent = cumsum(exp_spent),
-           cum_made = cumsum(exp_made),
-           diff = cum_made / cum_spent) %>% 
-    select(stock_picked,
-           cum_spent,
-           cum_made, 
-           diff) %>% 
-    pivot_longer(-stock_picked, names_to = "type", values_to = "cumulative")
-
-ggplot(plot_dat, aes(x = stock_picked, y = cumulative, color = type, group = type)) +
-    geom_line() + 
-    scale_y_continuous(trans = "log10") + 
-    geom_text(aes(label = round(cumulative, 2)), 
-              check_overlap = TRUE,
-              vjust = 0)
-
-# write.csv(picks, "put_picks_04032023_mixed.csv")
+picks <- picks %>% 
+    filter(wperc > 1)
 
 ```
 # How many outcomes?
