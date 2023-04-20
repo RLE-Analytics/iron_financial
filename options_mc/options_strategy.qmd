@@ -38,6 +38,8 @@ for (url in urls) {
 }
 
 top_comp <- top_comp[!grepl("\\.", top_comp)]
+top_comp <- top_comp[top_comp != "NPPXF"]
+top_comp <- top_comp[top_comp != "WMMVF"]
 
 ```
 
