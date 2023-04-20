@@ -447,7 +447,7 @@ def get_all_options(token, options_selection):
 
 ```{python main}
 #| code-fold: true
-options_selection = '2023-04-28'
+options_selection = '2023-05-05'
 
 # final_puts = get_all_puts(token, options_selection)
 final_puts, final_calls = get_all_options(token, options_selection)
@@ -526,7 +526,7 @@ while(total_available > 0) {
 }
 
 picks <- picks %>% 
-    filter(wperc > 1)
+    filter(wperc > 0.5)
 
 ```
 # How many outcomes?
@@ -534,55 +534,6 @@ picks <- picks %>%
 There are 2^n^ potential outcomes. In this case, n is `r length(picks$symbol)` 
 and there are `r 2^length(picks$symbol)` outcomes. What is each outcome and 
 what is the likelihood of each?
-
-```{r}
-# picks <- read_csv("put_picks_04032023_mixed.csv")
-
-NUM_SAMPLES <- 10000
-NUM_PICKS <- length(picks$symbol)
-
-sim_picks <- tibble(symbol = rep(unique(picks$symbol), NUM_SAMPLES),
-                    sample = rep(1:NUM_SAMPLES, each = NUM_PICKS),
-                    runif = runif(NUM_SAMPLES * NUM_PICKS)) %>% 
-    left_join(picks, by = "symbol") %>% 
-    mutate(winner = ifelse((type == "put" & runif <= `Llhd Blw EP`) | 
-                               (type == "call" & runif <= `Llhd Abv EP`), 
-                           TRUE, FALSE), 
-           payout = ifelse(winner, Gain, Cost))
-
-sim_sum <- sim_picks %>% 
-    group_by(sample) %>% 
-    summarise(winners = paste0(sort(unique(symbol[winner])), collapse = ","),
-              num_win = sum(winner),
-              payout = sum(payout))
-
-prob_win <- sim_sum %>% 
-    group_by(winners) %>% 
-    summarise(count = n()) %>% 
-    mutate(prob = count / NUM_SAMPLES) %>% 
-    left_join(sim_sum, by = "winners") %>%
-    select(-sample) %>% 
-    unique() %>% 
-    mutate(ev = prob * payout)
-
-prob_win %>% 
-    arrange(desc(prob)) %>% 
-    mutate(cum_prob = cumsum(prob))
-
-
-ggplot(prob_win, aes(x = reorder(winners, payout), y = prob)) + 
-    geom_bar(stat = 'identity') +
-    geom_vline(xintercept = 0, color = "red") + 
-    theme(axis.ticks = element_blank(),
-          axis.text.x = element_blank())
-
-summary(sim_sum$payout)
-length(sim_sum$num_win[sim_sum$payout >= 0]) / length(sim_sum$num_win)
-
-ggplot(sim_sum, aes(x = payout)) + 
-    geom_histogram(bins = 8) + 
-    geom_vline(xintercept = 0, color = "red")
-```
 
 NEXT QUESTION TO ANSWER: How correlated are these stocks? How unfair is it to 
 think each is independent of one another. 
@@ -599,7 +550,7 @@ is the SPY Index. Essentially, I am creating my own Beta measurement.
 spy_hist <- py$get_hist_data("SPY", py$token)
 spy_hist <- spy_hist %>% 
     mutate(last_close = lag(Close), 
-           spy_change = Close - last_close) %>% 
+           spy_change = (Close - last_close) / last_close) %>% 
     select(Date,
            spy_change)
 
@@ -610,7 +561,7 @@ for (pick in picks$symbol) {
     pick_hist <- py$get_hist_data(pick, py$token)
     pick_hist <- pick_hist %>% 
         mutate(last_close = lag(Close), 
-               pick_change = Close - last_close) %>% 
+               pick_change = (Close - last_close) / last_close) %>% 
         select(Date,
                pick_change)
     
@@ -623,7 +574,9 @@ for (pick in picks$symbol) {
     price_dat <- price_dat %>% 
         full_join(pick_hist, by = "Date")
     
-    cor_ <- cor(corr_dat$spy_change, corr_dat$pick_change)
+    cor_ <- cor(corr_dat$spy_change, 
+                corr_dat$pick_change, 
+                method = "spearman")^2
     
     tmp <- tibble(stock = pick,
                   correlation = cor_)
@@ -632,14 +585,156 @@ for (pick in picks$symbol) {
 
 }
 
-price_dat <- price_dat %>% 
-    select(-Date) %>% 
-    drop_na()
+# price_dat <- price_dat %>%
+    # select(-Date) %>% 
+    # drop_na()
 
-cor(price_dat)
-
-hist(cor_dat$correlation)
+# cor(price_dat, method = "kendall")
+# 
+# summary(cor_dat)
+# 
+# hist(spy_hist$spy_change)
 ```
-Long story short, there is correlation between all of these and I should 
-adjust my expectations for it. Just not sure how to do that yet. 
+
+```{r}
+library(purrr)
+
+picks_cor <- picks %>% 
+    left_join(cor_dat, by = c("symbol" = "stock"))
+
+NUM_SAMPLES <- 10000
+
+market <- tibble(sample = 1:NUM_SAMPLES,
+                 market_random = runif(NUM_SAMPLES))
+
+NUM_PICKS <- length(picks$symbol)
+
+sim_picks <- tibble(symbol = rep(unique(picks$symbol), NUM_SAMPLES),
+                    sample = rep(1:NUM_SAMPLES, each = NUM_PICKS)) %>% 
+    left_join(picks_cor, by = "symbol") %>% 
+    left_join(market, by = "sample") %>% 
+    mutate(cor_adj = 1 - correlation,
+           lb_adj = ifelse(market_random - (cor_adj / 2) < 0, 
+                           abs(market_random - (cor_adj / 2)),
+                           0),
+           ub_adj = ifelse(market_random + (cor_adj / 2) > 1, 
+                           market_random + (cor_adj / 2) - 1,
+                           0),
+           lb = market_random - (cor_adj / 2) + lb_adj - ub_adj,
+           ub = market_random + (cor_adj / 2) - ub_adj + lb_adj) 
+
+
+rand_picks <- sim_picks %>% 
+    mutate(n = 1) %>% 
+    select(n, lb, ub) %>% 
+    rename(min = lb, max = ub) %>% 
+    pmap(runif) %>% 
+    unlist()
+
+sim_picks <- sim_picks %>% 
+    mutate(runif = rand_picks, 
+           winner = ifelse((type == "put" & runif <= `Llhd Blw EP`) | 
+                               (type == "call" & runif <= `Llhd Abv EP`), 
+                           TRUE, FALSE), 
+           payout = ifelse(winner, Gain, Cost))
+
+sim_sum <- sim_picks %>% 
+    group_by(sample) %>% 
+    summarise(winners = paste0(sort(unique(symbol[winner])), collapse = ","),
+              num_win = sum(winner),
+              payout = sum(payout))
+
+
+prob_win <- sim_sum %>% 
+    group_by(winners) %>% 
+    summarise(count = n()) %>% 
+    mutate(prob = count / NUM_SAMPLES) %>% 
+    left_join(sim_sum, by = "winners") %>%
+    select(-sample) %>% 
+    unique() %>% 
+    mutate(ev = prob * payout)
+
+prob_win %>% 
+    arrange(desc(prob)) %>% 
+    mutate(cum_prob = cumsum(prob))
+
+summary(sim_sum$payout)
+length(sim_sum$num_win[sim_sum$payout >= 0]) / length(sim_sum$num_win)
+
+ggplot(sim_sum, aes(x = payout)) + 
+    geom_density() + 
+    geom_vline(xintercept = 0, color = "red") + 
+    geom_vline(xintercept = mean(sim_sum$payout), color = "green")
+```
+
+
+```{r}
+num_stocks <- c(4, 8, 12, 16, 20, 24, 28, 32)
+
+sum_dat <- tibble()
+
+for (ns in num_stocks) {
+    picks_cor <- picks %>% 
+        left_join(cor_dat, by = c("symbol" = "stock")) %>% 
+        slice_max(wperc, n = ns)
+    
+    NUM_SAMPLES <- 10000
+    
+    market <- tibble(sample = 1:NUM_SAMPLES,
+                     market_random = runif(NUM_SAMPLES))
+    
+    NUM_PICKS <- length(picks_cor$symbol)
+    
+    sim_picks <- tibble(symbol = rep(unique(picks_cor$symbol), NUM_SAMPLES),
+                        sample = rep(1:NUM_SAMPLES, each = NUM_PICKS)) %>% 
+        left_join(picks_cor, by = "symbol") %>% 
+        left_join(market, by = "sample") %>% 
+        mutate(cor_adj = 1 - correlation,
+               lb_adj = ifelse(market_random - (cor_adj / 2) < 0, 
+                               abs(market_random - (cor_adj / 2)),
+                               0),
+               ub_adj = ifelse(market_random + (cor_adj / 2) > 1, 
+                               market_random + (cor_adj / 2) - 1,
+                               0),
+               lb = market_random - (cor_adj / 2) + lb_adj - ub_adj,
+               ub = market_random + (cor_adj / 2) - ub_adj + lb_adj) 
+    
+    
+    rand_picks <- sim_picks %>% 
+        mutate(n = 1) %>% 
+        select(n, lb, ub) %>% 
+        rename(min = lb, max = ub) %>% 
+        pmap(runif) %>% 
+        unlist()
+    
+    sim_picks <- sim_picks %>% 
+        mutate(runif = rand_picks, 
+               winner = ifelse((type == "put" & runif <= `Llhd Blw EP`) | 
+                                   (type == "call" & runif <= `Llhd Abv EP`), 
+                               TRUE, FALSE), 
+               payout = ifelse(winner, Gain, Cost))
+    
+    sim_sum <- sim_picks %>% 
+        group_by(sample) %>% 
+        summarise(winners = paste0(sort(unique(symbol[winner])), collapse = ","),
+                  num_win = sum(winner),
+                  payout = sum(payout))
+    
+    tmp_tib <- tibble(
+        n = ns,
+        stocks = paste0(unique(picks_cor$symbol), collapse = ","),
+        prob_money = length(sim_sum$num_win[sim_sum$payout >= 0]) / 
+            length(sim_sum$num_win),
+        min = min(sim_sum$payout),
+        lq = as.numeric(quantile(sim_sum$payout, 0.25)),
+        med = median(sim_sum$payout),
+        avg = mean(sim_sum$payout),
+        uq = as.numeric(quantile(sim_sum$payout, 0.75)),
+        max = max(sim_sum$payout)
+    )
+    
+    sum_dat <- bind_rows(sum_dat, tmp_tib)
+}
+
+```
 
